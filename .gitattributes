@@ -1,0 +1,4 @@
+lib binary
+
+*.cpp eol=crlf
+*.h eol=crlf
