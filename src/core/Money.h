@@ -9,14 +9,22 @@ public:
     Money(long long int cents) // NOLINT(*-explicit-constructor)
         : cents{cents} {}
 
-    long long int getValue() const;
+    Money operator+(const Money &rhs) const;
+
+    Money operator-(const Money &rhs) const;
+
+    Money &operator+=(const Money &rhs);
+
+    Money &operator-=(const Money &rhs);
 
     operator long long int() const; // NOLINT(*-explicit-constructor)
+
+    long long int getValue() const;
 
     friend std::ostream& operator<<(std::ostream& os, const Money& money);
 
 private:
-    const long long int cents;
+    long long int cents;
 };
 
 #endif //VENDINGMACHINE_MONEY_H

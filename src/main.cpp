@@ -5,8 +5,7 @@ int main() {
     VendingMachine machine;
 
     ui_print_header();
-
-    std::system("pause");
+    ui_print_home();
 
     return 0;
 }

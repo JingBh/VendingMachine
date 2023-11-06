@@ -26,6 +26,8 @@ public:
 
     Money getPrice() const;
 
+    bool isOfSameType(const Good &other) const;
+
 private:
     const GoodType type;
 };

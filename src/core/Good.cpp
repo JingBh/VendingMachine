@@ -15,7 +15,7 @@ std::string Good::getName() const {
             return "咖啡";
 
         case WATER:
-            return "怡宝 C'estbon";
+            return "纯净水";
 
         default:
             return "Unknown Item";
@@ -40,4 +40,8 @@ Money Good::getPrice() const {
         default:
             return 0;
     }
+}
+
+bool Good::isOfSameType(const Good &other) const {
+    return type == other.type;
 }

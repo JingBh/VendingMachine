@@ -26,6 +26,12 @@ public:
     Cash(Money value, unsigned int quantity)
         : value{value}, HasQuantity{quantity} {}
 
+    Cash(const Cash &other)
+        : value{other.value}, HasQuantity(other.quantity) {}
+
+    Cash(Cash &&other) noexcept
+        : value{other.value}, HasQuantity(other.quantity) {}
+
     Money getFaceValue() const;
 
     Money getTotalValue() const;
@@ -33,27 +39,7 @@ public:
 private:
     const Money value;
 
-    static Money valueOf(CashType cashType) {
-        switch (cashType) {
-            case TEN_YUAN:
-                return 1000;
-
-            case FIVE_YUAN:
-                return 500;
-
-            case TWO_YUAN:
-                return 200;
-
-            case ONE_YUAN:
-                return 100;
-
-            case FIFTY_CENTS:
-                return 50;
-
-            default:
-                return 0;
-        }
-    }
+    static Money valueOf(CashType cashType);
 };
 
 #endif //VENDINGMACHINE_CASH_H

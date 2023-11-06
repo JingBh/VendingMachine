@@ -1,10 +1,5 @@
 #include "ui_util.h"
 
-void ui_clear_screen() {
-    ui_enable_ansi();
-    std::cout << "\033c";
-}
-
 bool ansiEnabled = false;
 void ui_enable_ansi() {
     if (ansiEnabled) {
@@ -24,4 +19,12 @@ void ui_enable_ansi() {
     SetConsoleMode(hOut, dwMode);
 
     ansiEnabled = true;
+}
+
+std::string ansi_clear_screen() {
+    return "\033c";
+}
+
+std::string ansi_move_up(unsigned int lines) {
+    return "\033[" + std::to_string(lines) + "A\033[G";
 }

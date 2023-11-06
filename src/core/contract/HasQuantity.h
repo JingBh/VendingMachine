@@ -1,3 +1,5 @@
+#include "../error/NotSufficientError.h"
+
 #ifndef VENDINGMACHINE_HASQUANTITY_H
 #define VENDINGMACHINE_HASQUANTITY_H
 
@@ -5,9 +7,9 @@ class HasQuantity {
 public:
     unsigned int getQuantity() const;
 
-    void fill(unsigned int number);
+    void fill(unsigned int number = 1);
 
-    void draw(unsigned int number);
+    void draw(unsigned int number = 1);
 
 protected:
     HasQuantity()

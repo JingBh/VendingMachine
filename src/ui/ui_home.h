@@ -5,4 +5,6 @@
 
 void ui_print_header();
 
+void ui_print_home();
+
 #endif //VENDINGMACHINE_UI_HOME_H

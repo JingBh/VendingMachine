@@ -1,8 +1,10 @@
+#include <algorithm>
 #include <memory>
 #include <vector>
 
 #include "Cash.h"
 #include "Good.h"
+#include "Money.h"
 
 #ifndef VENDINGMACHINE_VENDINGMACHINE_H
 #define VENDINGMACHINE_VENDINGMACHINE_H
@@ -13,7 +15,17 @@ public:
         init();
     }
 
+    const std::vector<std::unique_ptr<Good>> &getInventory() const;
+
+    void putMoney(const std::vector<Cash> &payment);
+
+    void purchase(const Good &good);
+
+    std::vector<Cash> makeChanges();
+
 private:
+    Money userBalance = 0;
+
     /**
      * Inventory for storing goods
      */

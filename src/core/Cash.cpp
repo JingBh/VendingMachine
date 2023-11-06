@@ -7,3 +7,25 @@ Money Cash::getFaceValue() const {
 Money Cash::getTotalValue() const {
     return value * quantity;
 }
+
+Money Cash::valueOf(CashType cashType) {
+    switch (cashType) {
+        case TEN_YUAN:
+            return 1000;
+
+        case FIVE_YUAN:
+            return 500;
+
+        case TWO_YUAN:
+            return 200;
+
+        case ONE_YUAN:
+            return 100;
+
+        case FIFTY_CENTS:
+            return 50;
+
+        default:
+            return 0;
+    }
+}

@@ -13,6 +13,8 @@ endif ()
 add_executable(VendingMachine src/main.cpp
         src/core/contract/HasQuantity.cpp
         src/core/contract/HasQuantity.h
+        src/core/error/LockError.h
+        src/core/error/NotSufficientError.h
         src/core/Cash.cpp
         src/core/Cash.h
         src/core/Good.cpp
