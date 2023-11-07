@@ -6,8 +6,7 @@ void ui_enable_ansi() {
         return;
     }
 
-    // Only works for Windows 10+
-
+#ifdef _WIN32 // Only works for Windows 10+
     SetConsoleCP(65001);
     SetConsoleOutputCP(65001);
 
@@ -17,6 +16,7 @@ void ui_enable_ansi() {
     GetConsoleMode(hOut, &dwMode);
     dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
     SetConsoleMode(hOut, dwMode);
+#endif
 
     ansiEnabled = true;
 }
