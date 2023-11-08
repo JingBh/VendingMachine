@@ -23,8 +23,6 @@ add_executable(VendingMachine src/main.cpp
         src/core/Money.h
         src/core/VendingMachine.cpp
         src/core/VendingMachine.h
-        src/ui/ui_home.cpp
-        src/ui/ui_home.h
-        src/ui/ui_util.cpp
-        src/ui/ui_util.h
+        src/ui/TUI.cpp
+        src/ui/TUI.h
 )

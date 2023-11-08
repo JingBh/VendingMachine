@@ -1,11 +1,14 @@
+#include <memory>
+
 #include "core/VendingMachine.h"
-#include "ui/ui_home.h"
+#include "ui/TUI.h"
 
 int main() {
-    VendingMachine machine;
+    // construct the vending machine
+    std::shared_ptr<VendingMachine> machine = std::make_shared<VendingMachine>();
 
-    ui_print_header();
-    ui_print_home();
+    TUI ui(machine);
+    ui.page_init();
 
     return 0;
 }
