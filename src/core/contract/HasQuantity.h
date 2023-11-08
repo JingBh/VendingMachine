@@ -1,5 +1,3 @@
-#include "../error/NotSufficientError.h"
-
 #ifndef VENDINGMACHINE_HASQUANTITY_H
 #define VENDINGMACHINE_HASQUANTITY_H
 

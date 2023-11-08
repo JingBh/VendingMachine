@@ -1,5 +1,9 @@
 #include "VendingMachine.h"
 
+#include <algorithm>
+
+#include "error/NotSufficientError.h"
+
 const std::vector<std::unique_ptr<Good>> &VendingMachine::getInventory() const {
     return inventory;
 }

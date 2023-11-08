@@ -1,5 +1,7 @@
 #include "HasQuantity.h"
 
+#include "../error/NotSufficientError.h"
+
 unsigned int HasQuantity::getQuantity() const {
     return quantity;
 }

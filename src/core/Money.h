@@ -1,5 +1,5 @@
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
 #ifndef VENDINGMACHINE_MONEY_H
 #define VENDINGMACHINE_MONEY_H
