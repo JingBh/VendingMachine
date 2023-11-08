@@ -36,10 +36,10 @@ public:
 
     Money getTotalValue() const;
 
+    static Money valueOf(CashType cashType);
+
 private:
     const Money value;
-
-    static Money valueOf(CashType cashType);
 };
 
 #endif //VENDINGMACHINE_CASH_H

@@ -10,10 +10,6 @@
 
 class VendingMachine {
 public:
-    VendingMachine() {
-        init();
-    }
-
     const std::vector<std::unique_ptr<Good>> &getInventory() const;
 
     void putMoney(const std::vector<Cash> &payment);
@@ -21,6 +17,10 @@ public:
     void purchase(const Good &good);
 
     std::vector<Cash> makeChanges();
+
+    Money getUserBalance() const;
+
+    void refill();
 
 private:
     Money userBalance = 0;
@@ -34,15 +34,6 @@ private:
      * Cash box for charging cash and making changes
      */
     std::vector<std::unique_ptr<Cash>> cashBox;
-
-    /**
-     * Initialize the machine.
-     *
-     * On start, the machine has
-     * a stock of 10 for each good,
-     * 10 one yuan and 10 fifty cents cash.
-     */
-    void init();
 };
 
 #endif //VENDINGMACHINE_VENDINGMACHINE_H

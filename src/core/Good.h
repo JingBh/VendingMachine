@@ -22,6 +22,8 @@ public:
     Good(GoodType type, unsigned int quantity)
         : type{type}, HasQuantity{quantity} {}
 
+    GoodType getType() const;
+
     std::string getName() const;
 
     Money getPrice() const;

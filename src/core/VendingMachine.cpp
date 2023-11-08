@@ -1,6 +1,7 @@
 #include "VendingMachine.h"
 
 #include <algorithm>
+#include <array>
 
 #include "error/NotSufficientError.h"
 
@@ -10,12 +11,16 @@ const std::vector<std::unique_ptr<Good>> &VendingMachine::getInventory() const {
 
 void VendingMachine::putMoney(const std::vector<Cash> &payment) {
     for (auto &cash : payment) {
+        bool flag = false;
         for (auto &item : cashBox) {
             if (item->getFaceValue() == cash.getFaceValue()) {
                 item->fill(cash.getQuantity());
+                flag = true;
                 break;
             }
+        }
 
+        if (!flag) {
             cashBox.emplace_back(std::make_unique<Cash>(cash.getFaceValue(), cash.getQuantity()));
         }
 
@@ -38,6 +43,8 @@ void VendingMachine::purchase(const Good &good) {
     } catch (NotSufficientError &e) {
         throw OutOfStockError("Good out of stock");
     }
+
+    userBalance -= good.getPrice() * good.getQuantity();
 }
 
 std::vector<Cash> VendingMachine::makeChanges() {
@@ -79,15 +86,57 @@ std::vector<Cash> VendingMachine::makeChanges() {
     return result;
 }
 
-void VendingMachine::init() {
-    inventory.clear();
-    inventory.push_back(std::make_unique<Good>(GoodType::COCA_COLA, 10));
-    inventory.push_back(std::make_unique<Good>(GoodType::PEPSI_COLA, 10));
-    inventory.push_back(std::make_unique<Good>(GoodType::ORANGE_JUICE, 10));
-    inventory.push_back(std::make_unique<Good>(GoodType::COFFEE, 10));
-    inventory.push_back(std::make_unique<Good>(GoodType::WATER, 10));
+Money VendingMachine::getUserBalance() const {
+    return userBalance;
+}
 
-    cashBox.clear();
-    cashBox.push_back(std::make_unique<Cash>(CashType::ONE_YUAN, 10));
-    cashBox.push_back(std::make_unique<Cash>(CashType::FIFTY_CENTS, 10));
+void VendingMachine::refill() {
+    std::array<GoodType, 5> goodTypes = {
+        GoodType::COCA_COLA,
+        GoodType::PEPSI_COLA,
+        GoodType::ORANGE_JUICE,
+        GoodType::COFFEE,
+        GoodType::WATER
+    };
+
+    for (auto &goodType : goodTypes) {
+        bool flag = false;
+        for (auto &item : inventory) {
+            if (item->getType() == goodType) {
+                if (item->getQuantity() < 10) {
+                    item->fill(10 - item->getQuantity());
+                }
+
+                flag = true;
+                break;
+            }
+        }
+
+        if (!flag) {
+            inventory.emplace_back(std::make_unique<Good>(goodType, 10));
+        }
+    }
+
+    std::array<CashType, 2> cashTypes = {
+        CashType::ONE_YUAN,
+        CashType::FIFTY_CENTS
+    };
+
+    for (auto &cashType : cashTypes) {
+        bool flag = false;
+        for (auto &item : cashBox) {
+            if (item->getFaceValue() == Cash::valueOf(cashType)) {
+                if (item->getQuantity() < 10) {
+                    item->fill(10 - item->getQuantity());
+                }
+
+                flag = true;
+                break;
+            }
+        }
+
+        if (!flag) {
+            cashBox.emplace_back(std::make_unique<Cash>(cashType, 10));
+        }
+    }
 }

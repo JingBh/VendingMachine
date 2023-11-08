@@ -1,5 +1,9 @@
 #include "Good.h"
 
+GoodType Good::getType() const {
+    return type;
+}
+
 std::string Good::getName() const {
     switch (type) {
         case COCA_COLA:

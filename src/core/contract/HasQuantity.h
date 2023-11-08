@@ -11,7 +11,7 @@ public:
 
 protected:
     HasQuantity()
-        : quantity{0} {}
+        : quantity{1} {}
 
     explicit HasQuantity(unsigned int quantity)
         : quantity{quantity} {}
