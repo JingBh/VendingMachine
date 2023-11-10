@@ -8,7 +8,7 @@ Money Cash::getTotalValue() const {
     return value * quantity;
 }
 
-Money Cash::valueOf(CashType cashType) {
+Money Cash::valueOf(const CashType cashType) {
     switch (cashType) {
         case TEN_YUAN:
             return 1000;

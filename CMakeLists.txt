@@ -10,7 +10,14 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
     add_definitions(-DDEBUG=1)
 endif ()
 
+add_subdirectory(lib/nlohmann/json)
+
+set(HTTPLIB_INSTALL OFF)
+add_subdirectory(lib/yhirose/cpp-httplib)
+
 add_executable(VendingMachine src/main.cpp
+        src/core/contract/HasPersistence.cpp
+        src/core/contract/HasPersistence.h
         src/core/contract/HasQuantity.cpp
         src/core/contract/HasQuantity.h
         src/core/error/NotSufficientError.h
@@ -26,3 +33,6 @@ add_executable(VendingMachine src/main.cpp
         src/ui/TUI.cpp
         src/ui/TUI.h
 )
+
+target_link_libraries(VendingMachine PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(VendingMachine PRIVATE httplib::httplib)

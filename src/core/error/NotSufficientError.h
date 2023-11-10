@@ -1,8 +1,8 @@
-#include <stdexcept>
-#include <string>
-
 #ifndef VENDINGMACHINE_NOTSUFFICIENTERROR_H
 #define VENDINGMACHINE_NOTSUFFICIENTERROR_H
+
+#include <stdexcept>
+#include <string>
 
 class NotSufficientError : public std::logic_error {
 public:

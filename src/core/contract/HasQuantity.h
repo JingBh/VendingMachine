@@ -13,7 +13,7 @@ protected:
     HasQuantity()
         : quantity{1} {}
 
-    explicit HasQuantity(unsigned int quantity)
+    explicit HasQuantity(const unsigned int quantity)
         : quantity{quantity} {}
 
     unsigned int quantity;

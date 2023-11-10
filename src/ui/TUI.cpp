@@ -1,20 +1,20 @@
 #include "TUI.h"
 
 #include <iomanip>
+#include <iostream>
 #include <limits>
 
 #include "../core/error/NotSufficientError.h"
 #include "../core/error/ValueError.h"
 #include "../core/Cash.h"
-#include "../core/Good.h"
 
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 #endif
 
 std::ostream &operator<<(std::ostream &os, const Money &money) {
-    long long int yuan = money.getValue() / 100;
-    long long int fen = money.getValue() % 100;
+    const long long int yuan = money.getValue() / 100;
+    const long long int fen = money.getValue() % 100;
 
     os << "￥" << yuan << '.'
         << std::setw(2) << std::setfill('0') << fen
@@ -23,7 +23,7 @@ std::ostream &operator<<(std::ostream &os, const Money &money) {
     return os;
 }
 
-TUI::TUI(std::shared_ptr<VendingMachine> &machine) : machine(machine) {
+TUI::TUI(const std::shared_ptr<VendingMachine> &machine) : machine(machine) {
 #ifdef _WIN32
     // Enable UTF-8 support
     SetConsoleCP(65001);
@@ -39,54 +39,54 @@ TUI::TUI(std::shared_ptr<VendingMachine> &machine) : machine(machine) {
 #endif
 }
 
-void TUI::page_init() {
-    ansi_clear_screen();
+void TUI::pageInit() const {
+    ansiClearScreen();
 
-    std::cout << ansi_clear_screen()
+    std::cout << ansiClearScreen()
         << "自动售卖机模拟系统" << '\n'
         << "by 22080206 敬博浩" << '\n'
         << std::endl;
 
     // TODO: select ui type
-    page_home();
+    pageHome();
 }
 
-void TUI::page_home() {
+void TUI::pageHome() const {
     while (true) {
-        std::cout << ansi_clear_screen()
+        std::cout << ansiClearScreen()
             << "欢迎使用自动售卖机！" << '\n'
             << std::endl;
 
-        print_status();
+        printStatus();
         std::cout << '\n';
 
         int op;
         try {
-            op = prompt_selection({
+            op = promptSelection({
                 { 1, "投币" },
                 { 2, "购买商品" },
                 { 3, "补货（仅限工作人员）" },
                 { 4, "退出" }
             });
-        } catch (ValueError &e) {
+        } catch (ValueError &_) {
             std::cout << "操作无效！按 <Enter> 键继续..." << std::flush;
-            wait_for_enter();
+            waitForEnter();
 
             continue;
         }
 
         switch (op) {
             case 1:
-                page_insert_cash();
+                pageInsertCash();
                 break;
             case 2:
-                page_purchase();
+                pagePurchase();
                 break;
             case 3:
-                page_refill();
+                pageRefill();
                 break;
             case 4:
-                page_exit();
+                pageExit();
                 return;
             default:
                 break;
@@ -94,38 +94,38 @@ void TUI::page_home() {
     }
 }
 
-void TUI::page_insert_cash() {
-    std::cout << ansi_clear_screen()
+void TUI::pageInsertCash() const {
+    std::cout << ansiClearScreen()
         << "# 投币" << '\n'
         << std::endl;
 
     int op;
     try {
-        op = prompt_selection("请选择要投入的现金类型：", {
-            { CashType::TEN_YUAN, "十元" },
-            { CashType::FIVE_YUAN, "五元" },
-            { CashType::TWO_YUAN, "二元" },
-            { CashType::ONE_YUAN, "一元" },
-            { CashType::FIFTY_CENTS, "五角" }
+        op = promptSelection("请选择要投入的现金类型：", {
+            { TEN_YUAN, "十元" },
+            { FIVE_YUAN, "五元" },
+            { TWO_YUAN, "二元" },
+            { ONE_YUAN, "一元" },
+            { FIFTY_CENTS, "五角" }
         });
-    } catch (ValueError &e) {
+    } catch (ValueError &_) {
         std::cout << '\n'
             << "操作无效！"
             << "按 <Enter> 键继续..." << std::flush;
-        wait_for_enter();
+        waitForEnter();
 
         return;
     }
 
-    machine->putMoney({ Cash(static_cast<CashType>(op)) });
+    machine->userPutMoney({ Cash(static_cast<CashType>(op)) });
 }
 
-void TUI::page_purchase() {
-    std::cout << ansi_clear_screen()
+void TUI::pagePurchase() const {
+    std::cout << ansiClearScreen()
         << "# 购买商品" << '\n'
         << std::endl;
 
-    print_status();
+    printStatus();
     std::cout << '\n';
 
     int op;
@@ -135,49 +135,57 @@ void TUI::page_purchase() {
             options[good->getType()] = good->getName();
         }
 
-        op = prompt_selection("请选择要购买的商品：", options);
-    } catch (ValueError &e) {
+        op = promptSelection("请选择要购买的商品：", options);
+    } catch (ValueError &_) {
         std::cout << '\n'
             << "操作无效！"
             << "按 <Enter> 键继续..." << std::flush;
-        wait_for_enter();
+        waitForEnter();
 
         return;
     }
 
     try {
-        Good good(static_cast<GoodType>(op));
-        machine->purchase(good);
+        const Good good(static_cast<GoodType>(op));
+        machine->userPurchase(good);
 
         std::cout << '\n'
             << "购买成功！" << '\n'
             << "您获得了：" << good.getName() << " x" << good.getQuantity() << '\n'
             << "按 <Enter> 键继续..." << std::flush;
-        wait_for_enter();
-    } catch (OutOfStockError &e) {
+        waitForEnter();
+    } catch (OutOfStockError &_) {
         std::cout << '\n'
             << "很抱歉，商品已售罄！请选择其他商品。" << '\n'
             << "按 <Enter> 键继续..." << std::flush;
-        wait_for_enter();
-    } catch (MoneyNotSufficientError &e) {
+        waitForEnter();
+    } catch (MoneyNotSufficientError &_) {
         std::cout << '\n'
             << "余额不足！请投入足够的现金后再试。" << '\n'
             << "按 <Enter> 键继续..." << std::flush;
-        wait_for_enter();
+        waitForEnter();
     }
 }
 
-void TUI::page_refill() {
-    std::cout << ansi_clear_screen()
+void TUI::pageRefill() const {
+    std::cout << ansiClearScreen()
         << "# 补货" << '\n'
-        << '\n'
-        << "此操作会将每种商品余量填充至 10 件" << '\n'
+        << std::endl;
+
+    std::cout << "零钱箱内容：" << '\n';
+    for (const auto &cash : machine->getCashBox()) {
+        std::cout << " - " << cash->getFaceValue() << '\t'
+            << cash->getQuantity() << " 张" << '\n';
+    }
+    std::cout << std::endl;
+
+    std::cout << "此操作会将每种商品余量填充至 10 件" << '\n'
         << "并在零钱箱中填充 10 张一元现金和 10 张五角现金" << '\n'
         << "确定要继续吗？" << '\n'
         << std::endl;
 
     try {
-        int op = prompt_selection({
+        const int op = promptSelection({
             { 1, "继续" },
             { 2, "取消" }
         });
@@ -185,21 +193,21 @@ void TUI::page_refill() {
         if (op == 1) {
             machine->refill();
         }
-    } catch (ValueError &e) {
+    } catch (ValueError &_) {
         // pass
     }
 
     std::cout << '\n'
         << "操作已取消" << '\n'
         << "按 <Enter> 键继续..." << std::flush;
-    wait_for_enter();
+    waitForEnter();
 }
 
-void TUI::page_exit() {
-    std::cout << ansi_clear_screen();
+void TUI::pageExit() const {
+    std::cout << ansiClearScreen();
 
     try {
-        const auto changes = machine->makeChanges();
+        const auto changes = machine->userMakeChanges();
 
         if (!changes.empty()) {
             std::cout << "您获得了以下找零：" << '\n';
@@ -211,13 +219,13 @@ void TUI::page_exit() {
         }
 
         std::cout << "感谢您使用自动售卖机，欢迎下次光临！" << std::endl;
-    } catch (MoneyNotSufficientError &e) {
+    } catch (MoneyNotSufficientError &_) {
         std::cout << "由于售卖机内零钱不足，找零失败！" << '\n'
             << "请联系工作人员处理。" << std::endl;
     }
 }
 
-void TUI::print_status() const {
+void TUI::printStatus() const {
     std::cout << "剩余商品：" << '\n';
     for (const auto &good : machine->getInventory()) {
         std::cout << " - "
@@ -230,11 +238,11 @@ void TUI::print_status() const {
     std::cout << "已投金额：" << machine->getUserBalance() << std::endl;
 }
 
-int TUI::prompt_selection(const std::map<int, std::string> &options) {
-    return prompt_selection("请选择操作：", options);
+int TUI::promptSelection(const std::map<int, std::string> &options) {
+    return promptSelection("请选择操作：", options);
 }
 
-int TUI::prompt_selection(const std::string &prompt, const std::map<int, std::string> &options) {
+int TUI::promptSelection(const std::string &prompt, const std::map<int, std::string> &options) {
     if (options.begin() == options.end()) {
         return 0;
     }
@@ -245,7 +253,7 @@ int TUI::prompt_selection(const std::string &prompt, const std::map<int, std::st
     }
 
     for (const auto& [key, value] : options) {
-        std::cout << (key + offset) << ". " << value << '\n';
+        std::cout << key + offset << ". " << value << '\n';
     }
     std::cout << prompt << std::flush;
 
@@ -253,7 +261,7 @@ int TUI::prompt_selection(const std::string &prompt, const std::map<int, std::st
     std::cin >> op;
     op -= offset;
 
-    if (std::cin.fail() || options.find(op) == options.end()) {
+    if (std::cin.fail() || !options.contains(op)) {
         std::cin.clear();
         throw ValueError("Invalid option: " + std::to_string(op));
     }
@@ -261,12 +269,12 @@ int TUI::prompt_selection(const std::string &prompt, const std::map<int, std::st
     return op;
 }
 
-void TUI::wait_for_enter() {
+void TUI::waitForEnter() {
     std::cin.clear();
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
+    std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
 }
 
-std::string TUI::ansi_clear_screen() {
+std::string TUI::ansiClearScreen() {
     return "\033c";
 }

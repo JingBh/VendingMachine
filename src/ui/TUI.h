@@ -1,4 +1,7 @@
-#include <iostream>
+#ifndef VENDINGMACHINE_TUI_H
+#define VENDINGMACHINE_TUI_H
+
+#include <iosfwd>
 #include <map>
 #include <memory>
 #include <string>
@@ -6,39 +9,36 @@
 #include "../core/Money.h"
 #include "../core/VendingMachine.h"
 
-#ifndef VENDINGMACHINE_TUI_H
-#define VENDINGMACHINE_TUI_H
-
 std::ostream &operator<<(std::ostream &os, const Money &money);
 
 class TUI {
 public:
-    explicit TUI(std::shared_ptr<VendingMachine> &machine);
+    explicit TUI(const std::shared_ptr<VendingMachine> &machine);
 
-    void page_init();
+    void pageInit() const;
 
-    void page_home();
+    void pageHome() const;
 
-    void page_insert_cash();
+    void pageInsertCash() const;
 
-    void page_purchase();
+    void pagePurchase() const;
 
-    void page_refill();
+    void pageRefill() const;
 
-    void page_exit();
+    void pageExit() const;
 
 private:
     std::shared_ptr<VendingMachine> machine;
 
-    void print_status() const;
+    void printStatus() const;
 
-    static int prompt_selection(const std::map<int, std::string> &options);
+    static int promptSelection(const std::map<int, std::string> &options);
 
-    static int prompt_selection(const std::string &prompt, const std::map<int, std::string> &options);
+    static int promptSelection(const std::string &prompt, const std::map<int, std::string> &options);
 
-    static void wait_for_enter();
+    static void waitForEnter();
 
-    static std::string ansi_clear_screen();
+    static std::string ansiClearScreen();
 };
 
 #endif // VENDINGMACHINE_TUI_H

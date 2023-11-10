@@ -1,10 +1,12 @@
+#ifndef VENDINGMACHINE_GOOD_H
+#define VENDINGMACHINE_GOOD_H
+
 #include <string>
+
+#include <nlohmann/json.hpp>
 
 #include "contract/HasQuantity.h"
 #include "Money.h"
-
-#ifndef VENDINGMACHINE_GOOD_H
-#define VENDINGMACHINE_GOOD_H
 
 enum GoodType {
     COCA_COLA,
@@ -16,11 +18,13 @@ enum GoodType {
 
 class Good : public HasQuantity {
 public:
-    explicit Good(GoodType type)
+    explicit Good(const GoodType type)
         : type{type} {}
 
-    Good(GoodType type, unsigned int quantity)
+    Good(const GoodType type, const unsigned int quantity)
         : type{type}, HasQuantity{quantity} {}
+
+    virtual ~Good() = default;
 
     GoodType getType() const;
 
@@ -32,6 +36,24 @@ public:
 
 private:
     const GoodType type;
+};
+
+
+template<>
+struct nlohmann::adl_serializer<Good> {
+    static void to_json(json &j, const Good &obj) {
+        j = json{
+            { "type", obj.getType() },
+            { "quantity", obj.getQuantity() }
+        };
+    }
+
+    static Good from_json(const json &j) {
+        return Good{
+            j.at("type").get<GoodType>(),
+            j.at("quantity").get<unsigned int>()
+        };
+    }
 };
 
 #endif //VENDINGMACHINE_GOOD_H
