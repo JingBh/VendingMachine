@@ -14,7 +14,7 @@ enum CashType {
     FIFTY_CENTS
 };
 
-class Cash : public HasQuantity {
+class Cash final : public HasQuantity {
 public:
     explicit Cash(const CashType cashType)
         : value{valueOf(cashType)} {}
@@ -33,8 +33,6 @@ public:
 
     Cash(Cash &&other) noexcept
         : value{other.value}, HasQuantity(other.quantity) {}
-
-    virtual ~Cash() = default;
 
     Money getFaceValue() const;
 

@@ -41,7 +41,7 @@ void VendingMachine::userPurchase(const Good &good) {
                 break;
             }
         }
-    } catch (NotSufficientError &_) {
+    } catch (NotSufficientError &) {
         throw OutOfStockError("Good out of stock");
     }
 

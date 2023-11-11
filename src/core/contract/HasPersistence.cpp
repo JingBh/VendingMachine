@@ -21,7 +21,7 @@ void HasPersistence::saveState() const {
         saveState(os);
 
         os.close();
-    } catch (std::runtime_error &e) {
+    } catch (std::exception &e) {
         std::cerr << e.what() << std::endl;
     }
 }
@@ -36,7 +36,7 @@ void HasPersistence::loadState() {
         loadState(is);
 
         is.close();
-    } catch (std::runtime_error &e) {
+    } catch (std::exception &e) {
         std::cerr << e.what() << std::endl;
     }
 }

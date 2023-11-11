@@ -11,11 +11,13 @@
 
 std::ostream &operator<<(std::ostream &os, const Money &money);
 
-class TUI {
+class TUI final {
 public:
     explicit TUI(const std::shared_ptr<VendingMachine> &machine);
 
     void pageInit() const;
+
+    void pageWebUI() const;
 
     void pageHome() const;
 

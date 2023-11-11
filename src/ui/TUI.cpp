@@ -7,6 +7,7 @@
 #include "../core/error/NotSufficientError.h"
 #include "../core/error/ValueError.h"
 #include "../core/Cash.h"
+#include "WebUI.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -47,8 +48,44 @@ void TUI::pageInit() const {
         << "by 22080206 敬博浩" << '\n'
         << std::endl;
 
-    // TODO: select ui type
-    pageHome();
+    while (true) {
+        int op;
+        try {
+            op = promptSelection("请选择界面类型：", {
+                { 1, "命令行" },
+                { 2, "Web" }
+            });
+        } catch (ValueError &) {
+            std::cout << '\n'
+                << "操作无效！"
+                << "按 <Enter> 键继续..." << std::flush;
+            waitForEnter();
+
+            continue;
+        }
+
+        switch (op) {
+            case 1:
+                pageHome();
+                break;
+            case 2:
+                pageWebUI();
+                break;
+            default:
+                break;
+        }
+
+        break;
+    }
+}
+
+void TUI::pageWebUI() const {
+    std::cout << ansiClearScreen()
+        << "# Web UI" << '\n'
+        << std::endl;
+
+    WebUI webUI(machine);
+    webUI.start();
 }
 
 void TUI::pageHome() const {
@@ -58,7 +95,7 @@ void TUI::pageHome() const {
             << std::endl;
 
         printStatus();
-        std::cout << '\n';
+        std::cout << std::endl;
 
         int op;
         try {
@@ -68,8 +105,10 @@ void TUI::pageHome() const {
                 { 3, "补货（仅限工作人员）" },
                 { 4, "退出" }
             });
-        } catch (ValueError &_) {
-            std::cout << "操作无效！按 <Enter> 键继续..." << std::flush;
+        } catch (ValueError &) {
+            std::cout << '\n'
+                << "操作无效！"
+                << "按 <Enter> 键继续..." << std::flush;
             waitForEnter();
 
             continue;
@@ -108,7 +147,7 @@ void TUI::pageInsertCash() const {
             { ONE_YUAN, "一元" },
             { FIFTY_CENTS, "五角" }
         });
-    } catch (ValueError &_) {
+    } catch (ValueError &) {
         std::cout << '\n'
             << "操作无效！"
             << "按 <Enter> 键继续..." << std::flush;
@@ -126,7 +165,7 @@ void TUI::pagePurchase() const {
         << std::endl;
 
     printStatus();
-    std::cout << '\n';
+    std::cout << std::endl;
 
     int op;
     try {
@@ -136,7 +175,7 @@ void TUI::pagePurchase() const {
         }
 
         op = promptSelection("请选择要购买的商品：", options);
-    } catch (ValueError &_) {
+    } catch (ValueError &) {
         std::cout << '\n'
             << "操作无效！"
             << "按 <Enter> 键继续..." << std::flush;
@@ -154,12 +193,12 @@ void TUI::pagePurchase() const {
             << "您获得了：" << good.getName() << " x" << good.getQuantity() << '\n'
             << "按 <Enter> 键继续..." << std::flush;
         waitForEnter();
-    } catch (OutOfStockError &_) {
+    } catch (OutOfStockError &) {
         std::cout << '\n'
             << "很抱歉，商品已售罄！请选择其他商品。" << '\n'
             << "按 <Enter> 键继续..." << std::flush;
         waitForEnter();
-    } catch (MoneyNotSufficientError &_) {
+    } catch (MoneyNotSufficientError &) {
         std::cout << '\n'
             << "余额不足！请投入足够的现金后再试。" << '\n'
             << "按 <Enter> 键继续..." << std::flush;
@@ -193,7 +232,7 @@ void TUI::pageRefill() const {
         if (op == 1) {
             machine->refill();
         }
-    } catch (ValueError &_) {
+    } catch (ValueError &) {
         // pass
     }
 
@@ -219,7 +258,7 @@ void TUI::pageExit() const {
         }
 
         std::cout << "感谢您使用自动售卖机，欢迎下次光临！" << std::endl;
-    } catch (MoneyNotSufficientError &_) {
+    } catch (MoneyNotSufficientError &) {
         std::cout << "由于售卖机内零钱不足，找零失败！" << '\n'
             << "请联系工作人员处理。" << std::endl;
     }

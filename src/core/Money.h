@@ -3,7 +3,7 @@
 
 #include <nlohmann/json.hpp>
 
-class Money {
+class Money final {
 public:
     // ReSharper disable once CppNonExplicitConvertingConstructor
     Money(const long long int cents) // NOLINT(*-explicit-constructor)

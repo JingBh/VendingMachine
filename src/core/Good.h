@@ -16,15 +16,13 @@ enum GoodType {
     WATER
 };
 
-class Good : public HasQuantity {
+class Good final : public HasQuantity {
 public:
     explicit Good(const GoodType type)
         : type{type} {}
 
     Good(const GoodType type, const unsigned int quantity)
         : type{type}, HasQuantity{quantity} {}
-
-    virtual ~Good() = default;
 
     GoodType getType() const;
 

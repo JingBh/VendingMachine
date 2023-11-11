@@ -32,7 +32,16 @@ add_executable(VendingMachine src/main.cpp
         src/core/VendingMachine.h
         src/ui/TUI.cpp
         src/ui/TUI.h
+        src/ui/WebUI.cpp
+        src/ui/WebUI.h
 )
+
+set(WEB_ASSETS_HEADER_DIR "web/dist/include")
+if(EXISTS "${CMAKE_SOURCE_DIR}/${WEB_ASSETS_HEADER_DIR}")
+    include_directories(${WEB_ASSETS_HEADER_DIR})
+else()
+    add_definitions(-DVENDINGMACHINE_WEBUI_NOASSET=1)
+endif()
 
 target_link_libraries(VendingMachine PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(VendingMachine PRIVATE httplib::httplib)
