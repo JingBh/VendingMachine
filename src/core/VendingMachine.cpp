@@ -113,8 +113,10 @@ void VendingMachine::putMoney(const Cash &cash, const bool absolute) {
     bool flag = false;
     for (const auto &item : cashBox) {
         if (item->getFaceValue() == cash.getFaceValue()) {
-            if (absolute && item->getQuantity() < cash.getQuantity()) {
-                item->fill(cash.getQuantity() - item->getQuantity());
+            if (absolute) {
+                if (item->getQuantity() < cash.getQuantity()) {
+                    item->fill(cash.getQuantity() - item->getQuantity());
+                }
             } else {
                 item->fill(cash.getQuantity());
             }
@@ -133,8 +135,10 @@ void VendingMachine::putGood(const Good &good, const bool absolute) {
     bool flag = false;
     for (const auto &item : inventory) {
         if (item->isOfSameType(good)) {
-            if (absolute && item->getQuantity() < good.getQuantity()) {
-                item->fill(good.getQuantity() - item->getQuantity());
+            if (absolute) {
+                if (item->getQuantity() < good.getQuantity()) {
+                    item->fill(good.getQuantity() - item->getQuantity());
+                }
             } else {
                 item->fill(good.getQuantity());
             }

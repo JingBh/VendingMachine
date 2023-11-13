@@ -7,6 +7,7 @@
 #include "../core/error/NotSufficientError.h"
 #include "../core/error/ValueError.h"
 #include "../core/Cash.h"
+#include "../core/Good.h"
 #include "WebUI.h"
 
 #ifdef _WIN32
@@ -174,10 +175,21 @@ void TUI::pagePurchase() const {
             options[good->getType()] = good->getName();
         }
 
+        if (options.empty()) {
+            throw OutOfStockError("No goods available");
+        }
+
         op = promptSelection("请选择要购买的商品：", options);
     } catch (ValueError &) {
         std::cout << '\n'
             << "操作无效！"
+            << "按 <Enter> 键继续..." << std::flush;
+        waitForEnter();
+
+        return;
+    } catch (OutOfStockError &) {
+        std::cout << '\n'
+            << "很抱歉，所有商品均已售罄！" << '\n'
             << "按 <Enter> 键继续..." << std::flush;
         waitForEnter();
 
@@ -231,6 +243,7 @@ void TUI::pageRefill() const {
 
         if (op == 1) {
             machine->refill();
+            return;
         }
     } catch (ValueError &) {
         // pass
@@ -271,6 +284,9 @@ void TUI::printStatus() const {
             << std::left << std::setfill(' ') << std::setw(12) << good->getName() << '\t'
             << std::left << std::setfill(' ') << std::setw(4) << "x" + std::to_string(good->getQuantity()) << '\t'
             << "单价：" << good->getPrice() << '\n';
+    }
+    if (machine->getInventory().empty()) {
+        std::cout << " - 售卖机空空如也，请联系工作人员补货。" << '\n';
     }
     std::cout << std::endl;
 
