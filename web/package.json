@@ -7,12 +7,16 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.2.3",
+    "@vueuse/core": "^10.6.0",
+    "@vueuse/integrations": "^10.6.0",
     "autoprefixer": "^10.4.16",
+    "axios": "^1.6.1",
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.5",
     "vite": "^4.4.5",
     "vite-plugin-minify": "^1.5.2",
     "vite-plugin-singlefile": "^0.13.5",
-    "vue": "^3.3.4"
+    "vue": "^3.3.4",
+    "vue-tippy": "^6.3.1"
   }
 }

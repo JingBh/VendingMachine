@@ -12,7 +12,7 @@
 #include "Good.h"
 #include "Money.h"
 
-class VendingMachine final : HasPersistence {
+class VendingMachine final : public HasPersistence {
 public:
     VendingMachine();
 
