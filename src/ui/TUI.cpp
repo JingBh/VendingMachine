@@ -223,12 +223,14 @@ void TUI::pageRefill() const {
         << "# 补货" << '\n'
         << std::endl;
 
-    std::cout << "零钱箱内容：" << '\n';
-    for (const auto &cash : machine->getCashBox()) {
-        std::cout << " - " << cash->getFaceValue() << '\t'
-            << cash->getQuantity() << " 张" << '\n';
+    if (!machine->getCashBox().empty()) {
+        std::cout << "零钱箱内容：" << '\n';
+        for (const auto &cash : machine->getCashBox()) {
+            std::cout << " - " << cash->getFaceValue() << '\t'
+                      << cash->getQuantity() << " 张" << '\n';
+        }
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
 
     std::cout << "此操作会将每种商品余量填充至 10 件" << '\n'
         << "并在零钱箱中填充 10 张一元现金和 10 张五角现金" << '\n'
