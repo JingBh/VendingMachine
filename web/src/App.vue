@@ -4,7 +4,7 @@ import { useWindowSize } from '@vueuse/core'
 import { useAxios } from '@vueuse/integrations/useAxios'
 
 import { GoodTypes } from './utils/goods.js'
-import { getImageUrl, getImageElement } from './utils/images.js'
+import { getImageUrl } from './utils/images.js'
 import money from './utils/money.js'
 
 const windowSize = useWindowSize()
@@ -97,34 +97,27 @@ const {
       :style="machineDimensions"
     >
       <img
-        class="vm-bg w-full h-full"
-        alt="the Vending Machine"
+        class="absolute top-0 left-0 w-full h-full pointer-events-none"
+        alt="售卖机背景"
         :src="getImageUrl('vending-machine')"
+        style="z-index: 5"
       />
-        <tippy
-          v-for="(typeInfo, i) in GoodTypes"
-          :key="i"
-        >
+      <img
+        class="absolute top-0 left-0 w-full h-full pointer-events-none"
+        alt="货架区背景"
+        :src="getImageUrl('vending-machine-rack')"
+        style="z-index: 0"
+      />
+      <template
+        v-for="(typeInfo, i) in GoodTypes"
+        :key="i"
+      >
+        <tippy>
           <div
-            class="vm-rack"
-            :style="{ bottom: (84.3 - 9.575 * i) + '%' }"
-          >
-            <img
-              v-for="j in goodCounts[i]"
-              class="vm-rack-good"
-              :alt="typeInfo.name"
-              :src="getImageUrl(typeInfo.id + '-small')"
-              :style="{ left: (j - 1) * 10 + 0.2 + '%' }"
-            />
-            <img
-              v-for="j in goodCounts[i]"
-              class="vm-rack-ring"
-              alt="货架"
-              :src="getImageUrl('ring')"
-              :style="{ left: (j - 1) * 10 + 0.2 + '%' }"
-            />
-          </div>
-
+            class="absolute rounded-lg hover:ring-2 ring-amber-500"
+            style="left: 7%; width: 66.5%; height: 9.2%; z-index: 6"
+            :style="{ bottom: (83 - 9.575 * i) + '%' }"
+          />
           <template #content>
             <div class="flex flex-col gap-1">
               <p
@@ -140,14 +133,44 @@ const {
             </div>
           </template>
         </tippy>
-      <div class="vm-port" v-tippy="'取货口'" />
-      <div class="vm-action" v-tippy="'操作区'" />
-      <div class="vm-lock" v-tippy="'补货'" />
+        <template v-for="j in goodCounts[i]">
+          <img
+            class="vm-rack-good absolute object-contain"
+            :alt="typeInfo.name"
+            :src="getImageUrl(typeInfo.id + '-small')"
+            style="width: 6.384%; height: 8%; z-index: 2"
+            :style="{ bottom: (84.3 - 9.575 * i) + '%', left: 7 + 66.5 * ((j - 1) * 0.1 + 0.002) + '%' }"
+          />
+          <img
+            class="vm-rack-ring absolute h-auto"
+            alt="货架"
+            :src="getImageUrl('ring')"
+            style="width: 6.384%; z-index: 3"
+            :style="{ bottom: (84.3 - 9.575 * i) + '%', left: 7 + 66.5 * ((j - 1) * 0.1 + 0.002) + '%' }"
+          />
+        </template>
+      </template>
+      <div
+        class="absolute rounded-sm hover:ring-4 ring-amber-500 cursor-pointer"
+        style="bottom: 16.7%; left: 18.7%; width: 42.5%; height: 17.5%; z-index: 6"
+        v-tippy="'取货口'"
+      />
+      <div
+        class="absolute rounded-sm hover:ring-4 ring-amber-500 cursor-pointer"
+        style="bottom: 40.1%; left: 81.2%; width: 14.4%; height: 48.6%; z-index: 6"
+        v-tippy="'操作区'"
+      />
+      <div
+        class="absolute rounded-sm hover:ring-4 ring-amber-500 cursor-pointer"
+        style="bottom: 32.8%; left: 93.2%; width: 4.2%; height: 6.2%; z-index: 6"
+        v-tippy="'补货'"
+      />
       <canvas
-        class="vm-canvas"
+        class="absolute top-0 left-0 w-full h-full pointer-events-none"
         width="736"
         height="1088"
         ref="canvasPriceTag"
+        style="z-index: 1"
       />
     </div>
     <div class="flex flex-col items-stretch gap-2" style="min-width: 128px; max-width: 256px">

@@ -6,6 +6,7 @@
     "build": "vite build"
   },
   "devDependencies": {
+    "@headlessui/vue": "^1.7.16",
     "@vitejs/plugin-vue": "^4.2.3",
     "@vueuse/core": "^10.6.0",
     "@vueuse/integrations": "^10.6.0",

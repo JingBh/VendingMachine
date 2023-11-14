@@ -1,4 +1,5 @@
 import imgVendingMachine from '../assets/images/vending-machine.png?inline'
+import imgVendingMachineRack from '../assets/images/vending-machine-rack.png?inline'
 import imgRing from '../assets/images/ring.png?inline'
 import imgCocaCola from '../assets/images/coca-cola.png?inline'
 import imgCocaColaSmall from '../assets/images/coca-cola-small.png?inline'
@@ -13,6 +14,7 @@ import imgWaterSmall from '../assets/images/water-small.png?inline'
 
 const imageUrls = {
   'vending-machine': imgVendingMachine,
+  'vending-machine-rack': imgVendingMachineRack,
   ring: imgRing,
   'coca-cola': imgCocaCola,
   'coca-cola-small': imgCocaColaSmall,
