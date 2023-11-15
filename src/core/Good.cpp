@@ -4,6 +4,28 @@ GoodType Good::getType() const {
     return type;
 }
 
+std::string Good::getImageId() const {
+    switch (type) {
+        case COCA_COLA:
+            return "coca-cola";
+
+        case PEPSI_COLA:
+            return "pepsi-cola";
+
+        case ORANGE_JUICE:
+            return "orange-juice";
+
+        case COFFEE:
+            return "coffee";
+
+        case WATER:
+            return "water";
+
+        default:
+            return "unknown";
+    }
+}
+
 std::string Good::getName() const {
     switch (type) {
         case COCA_COLA:

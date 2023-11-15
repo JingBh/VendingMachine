@@ -3,7 +3,6 @@ import { computed, ref } from 'vue'
 import { useWindowSize } from '@vueuse/core'
 import { useAxios } from '@vueuse/integrations/useAxios'
 
-import { GoodTypes } from './utils/goods.js'
 import { getImageUrl } from './utils/images.js'
 import money from './utils/money.js'
 
@@ -23,8 +22,15 @@ const machineDimensions = computed(() => {
   }
 })
 
-const canvasPriceTag = ref(null)
+const {
+  data: goodTypes
+} = useAxios('/api/goods', {}, {
+  immediate: true,
+  initialData: [],
+  onSuccess: () => drawPriceTags()
+})
 
+const canvasPriceTag = ref(null)
 const drawPriceTags = () => {
   const ele = canvasPriceTag.value
   if (!ele) {
@@ -35,8 +41,8 @@ const drawPriceTags = () => {
   ctx.clearRect(0, 0, ele.width, ele.height)
 
   let itemIndex = 0
-  for (const i in GoodTypes) {
-    const typeInfo = GoodTypes[i]
+  for (const i in goodTypes.value) {
+    const typeInfo = goodTypes.value[i]
 
     const yT = ele.height * (0.157 + 0.09575 * i) + 2
     const yB = yT + 12
@@ -80,9 +86,6 @@ const {
         goodCounts.value[item.type] = item.quantity
       }
     }
-  },
-  onFinish: () => {
-    drawPriceTags()
   }
 })
 </script>
@@ -109,12 +112,12 @@ const {
         style="z-index: 0"
       />
       <template
-        v-for="(typeInfo, i) in GoodTypes"
+        v-for="(typeInfo, i) in goodTypes"
         :key="i"
       >
         <tippy>
           <div
-            class="absolute rounded-lg hover:ring-2 ring-amber-500"
+            class="absolute rounded hover:bg-white opacity-10"
             style="left: 7%; width: 66.5%; height: 9.2%; z-index: 6"
             :style="{ bottom: (83 - 9.575 * i) + '%' }"
           />

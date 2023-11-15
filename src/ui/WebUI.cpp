@@ -6,6 +6,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include "../core/Good.h"
+
 WebUI::WebUI(const std::shared_ptr<VendingMachine> &machine) : machine(machine) {
     registerEndpoints();
 }
@@ -47,6 +49,26 @@ void WebUI::registerEndpoints() {
 #else
         res.set_content("未找到网页资源，请参考课设报告书中相关说明正确编译。", "text/plain; charset=utf-8");
 #endif
+    });
+
+    svr.Get("/api/goods", [&](const Request &, Response &res) {
+        nlohmann::json j;
+
+        for (auto &goodType : {
+            COCA_COLA,
+            PEPSI_COLA,
+            ORANGE_JUICE,
+            COFFEE,
+            WATER
+        }) {
+            j.push_back({
+                { "id", Good(goodType).getImageId() },
+                { "name", Good(goodType).getName() },
+                { "price", Good(goodType).getPrice() }
+            });
+        }
+
+        res.set_content(j.dump(), "application/json");
     });
 
     svr.Get("/api/state", [&](const Request &, Response &res) {

@@ -26,6 +26,8 @@ public:
 
     GoodType getType() const;
 
+    std::string getImageId() const;
+
     std::string getName() const;
 
     Money getPrice() const;
