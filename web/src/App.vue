@@ -1,7 +1,9 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useWindowSize } from '@vueuse/core'
 import { useAxios } from '@vueuse/integrations/useAxios'
+import { TransitionRoot, TransitionChild, Dialog, DialogPanel } from '@headlessui/vue'
+import axios from 'axios'
 
 import { getImageUrl } from './utils/images.js'
 import money from './utils/money.js'
@@ -20,14 +22,6 @@ const machineDimensions = computed(() => {
     width: machineWidth + 'px',
     height: machineHeight + 'px'
   }
-})
-
-const {
-  data: goodTypes
-} = useAxios('/api/goods', {}, {
-  immediate: true,
-  initialData: [],
-  onSuccess: () => drawPriceTags()
 })
 
 const canvasPriceTag = ref(null)
@@ -66,13 +60,15 @@ const drawPriceTags = () => {
   }
 }
 
+const goodTypes = ref([])
+const cashTypes = ref([])
 const goodCounts = ref({})
 
 const {
   data,
   execute: fetchData,
-  isLoading,
-  error: loadingError
+  isLoading: dataLoading,
+  error: dataError
 } = useAxios('/api/state', {}, {
   immediate: true,
   initialData: {
@@ -81,12 +77,144 @@ const {
     userBalance: 0
   },
   onSuccess: (data) => {
-    if (data.inventory) {
-      for (const item of data.inventory) {
+    goodTypes.value = data.goods || []
+    cashTypes.value = data.cashes || []
+    if (data.machine?.inventory) {
+      for (const item of data.machine.inventory) {
         goodCounts.value[item.type] = item.quantity
       }
     }
   }
+})
+
+watch(goodTypes, () => drawPriceTags(), {
+  immediate: true
+})
+
+const showOpsModal = ref(false)
+
+const isProcessing = ref(false)
+
+const isDropping = ref(false)
+
+const animateDrop = (id) => {
+  const eleAll = document.querySelectorAll(`.vm .vm-rack-good[data-item-id="${id}"]`)
+  const ele = eleAll[eleAll.length - 1]
+
+  const containerHeight = ele.parentElement.offsetHeight
+  // original distance to the bottom of the container
+  const eleBottomBase = containerHeight - ele.offsetTop - ele.offsetHeight
+  // distance to the bottom of the container after dropping
+  const eleBottomTarget = containerHeight * 0.2
+  // theoretical drop distance in meters (suppose the height of the machine is 2m)
+  const dropDistanceTotal = (eleBottomBase / containerHeight - 0.2) * 2
+  const scale = dropDistanceTotal / (eleBottomBase - eleBottomTarget)
+
+  let timeStart = null
+  const animationFrame = (time) => {
+    if (!timeStart) {
+      timeStart = time
+    }
+    const timeElapsed = (time - timeStart) / 1000
+
+    // distance dropped in meters
+    const dropDistance = 9.81 * Math.pow(timeElapsed, 2) / 2
+    if (dropDistance >= dropDistanceTotal) {
+      ele.style.display = 'none'
+      isDropping.value = false
+      fetchData()
+      return
+    }
+
+    // distance to the bottom of the container now
+    const eleBottom = eleBottomBase - dropDistance / scale
+    ele.style.bottom = Math.floor(eleBottom) + 'px'
+    window.requestAnimationFrame(animationFrame)
+  }
+
+  isDropping.value = true
+  ele.classList.add('vm-falling')
+  setTimeout(() => {
+    timeStart = null
+    window.requestAnimationFrame(animationFrame)
+  }, 500)
+}
+
+const insertCash = (value) => {
+  showOpsModal.value = false
+
+  if (isProcessing.value) {
+    return
+  }
+  isProcessing.value = true
+
+  axios.post('/api/cash', {
+    value
+  }, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+  }).then(() => {
+    fetchData()
+  }).catch((e) => {
+    console.error(e)
+    alert('投币失败！')
+  }).finally(() => {
+    isProcessing.value = false
+  })
+}
+
+const purchaseGood = (id) => {
+  showOpsModal.value = false
+
+  if (isProcessing.value) {
+    return
+  }
+  isProcessing.value = true
+
+  axios.post('/api/purchase', {
+    id
+  }, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+  }).then(() => {
+    animateDrop(id)
+  }).catch((e) => {
+    if (e.response?.status === 402) {
+      alert(e.response.data)
+    } else {
+      console.error(e)
+      alert('购买失败！')
+    }
+  }).finally(() => {
+    isProcessing.value = false
+  })
+}
+
+const refill = () => {
+  showOpsModal.value = false
+  isProcessing.value = true
+  axios.post('/api/refill').then(() => {
+    fetchData()
+  }).catch((e) => {
+    console.error(e)
+    alert('补货失败！')
+  }).finally(() => {
+    isProcessing.value = false
+  })
+}
+
+const isLoading = computed(() => {
+  return dataLoading.value || isProcessing.value
+})
+
+const isLock = computed(() => {
+  return isLoading.value || isDropping.value
+})
+
+const isError = computed(() => {
+  return dataError.value
 })
 </script>
 
@@ -117,8 +245,8 @@ const {
       >
         <tippy>
           <div
-            class="absolute rounded hover:bg-white opacity-10"
-            style="left: 7%; width: 66.5%; height: 9.2%; z-index: 6"
+            class="absolute rounded hover:bg-white/10"
+            style="left: 7%; width: 66.5%; height: 9.2%; z-index: 1"
             :style="{ bottom: (83 - 9.575 * i) + '%' }"
           />
           <template #content>
@@ -138,18 +266,20 @@ const {
         </tippy>
         <template v-for="j in goodCounts[i]">
           <img
-            class="vm-rack-good absolute object-contain"
+            class="vm-rack-good absolute object-contain transform pointer-events-none"
             :alt="typeInfo.name"
-            :src="getImageUrl(typeInfo.id + '-small')"
+            :src="getImageUrl(typeInfo.imageId + '-small')"
             style="width: 6.384%; height: 8%; z-index: 2"
             :style="{ bottom: (84.3 - 9.575 * i) + '%', left: 7 + 66.5 * ((j - 1) * 0.1 + 0.002) + '%' }"
+            :data-item-id="typeInfo.id"
           />
           <img
-            class="vm-rack-ring absolute h-auto"
+            class="vm-rack-ring absolute h-auto pointer-events-none"
             alt="货架"
             :src="getImageUrl('ring')"
             style="width: 6.384%; z-index: 3"
             :style="{ bottom: (84.3 - 9.575 * i) + '%', left: 7 + 66.5 * ((j - 1) * 0.1 + 0.002) + '%' }"
+            :data-item-id="typeInfo.id"
           />
         </template>
       </template>
@@ -159,14 +289,16 @@ const {
         v-tippy="'取货口'"
       />
       <div
-        class="absolute rounded-sm hover:ring-4 ring-amber-500 cursor-pointer"
+        class="absolute rounded-lg hover:ring-4 ring-amber-500 cursor-pointer"
         style="bottom: 40.1%; left: 81.2%; width: 14.4%; height: 48.6%; z-index: 6"
         v-tippy="'操作区'"
+        @click="showOpsModal = true"
       />
       <div
         class="absolute rounded-sm hover:ring-4 ring-amber-500 cursor-pointer"
         style="bottom: 32.8%; left: 93.2%; width: 4.2%; height: 6.2%; z-index: 6"
         v-tippy="'补货'"
+        @click="refill"
       />
       <canvas
         class="absolute top-0 left-0 w-full h-full pointer-events-none"
@@ -186,24 +318,37 @@ const {
         </span>
       </div>
       <hr class="border-t border-gray-400 my-3">
-      <div class="flex flex-col gap-1 text-sm">
-        <p>已投金额：{{ money(data.userBalance || 0) }}</p>
+      <div class="flex flex-col gap-2 text-sm font-medium">
+        <p
+          v-if="data.machine"
+          class="text-green-700"
+        >
+          已投金额：{{ money(data.machine.userBalance || 0) }}
+        </p>
         <p
           v-if="isLoading"
-          class="text-blue-700"
+          class="text-indigo-600"
         >
           正在加载数据...
         </p>
         <p
-          v-else-if="loadingError"
-          class="text-red-700"
+          v-else-if="isError"
+          class="text-red-600"
         >
           加载数据失败！请检查程序是否在运行并刷新重试。
+        </p>
+        <p
+          v-if="isDropping"
+          class="text-sky-600"
+        >
+          正在出货，请耐心等待...
         </p>
       </div>
       <hr class="border-t border-gray-400 my-3">
       <div class="flex flex-col gap-1 text-xs text-gray-500">
-        <p class="text-base text-gray-600">使用说明</p>
+        <p class="text-base text-gray-600">
+          使用说明
+        </p>
         <ol class="list-decimal list-inside">
           <li>点击售卖机右侧操作区进行投币和选择商品。</li>
           <li>确认购买后，在下方取物口拿取购买的商品。</li>
@@ -211,5 +356,117 @@ const {
         </ol>
       </div>
     </div>
+    <TransitionRoot
+      appear
+      :show="showOpsModal"
+      as="template"
+    >
+      <Dialog
+        as="div"
+        @close="showOpsModal = false"
+        class="relative z-10"
+      >
+        <TransitionChild
+          as="template"
+          enter="duration-300 ease-out"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="duration-200 ease-in"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
+          <div
+            class="fixed inset-0 bg-black/30"
+            aria-hidden="true"
+          />
+        </TransitionChild>
+
+        <div class="fixed inset-0 overflow-y-auto">
+          <div class="flex min-h-full items-center justify-center p-4">
+            <TransitionChild
+              as="template"
+              enter="duration-300 ease-out"
+              enter-from="opacity-0 scale-95"
+              enter-to="opacity-100 scale-100"
+              leave="duration-200 ease-in"
+              leave-from="opacity-100 scale-100"
+              leave-to="opacity-0 scale-95"
+            >
+              <DialogPanel class="w-full max-w-xl transform overflow-hidden rounded-2xl bg-white align-middle shadow-xl transition-all">
+                <div class="flex items-stretch border-b border-gray-300">
+                  <div class="flex-1 p-6 border-r border-gray-300">
+                    <h3 class="mb-4 text-xl text-center font-medium text-gray-900">
+                      投币
+                    </h3>
+                    <div class="flex flex-col items-stretch gap-2">
+                      <button
+                        v-for="(typeInfo, i) of cashTypes"
+                        :key="i"
+                        type="button"
+                        class="flex-1 rounded-md bg-blue-100 p-2 text-sm focus:outline-none select-none"
+                        :class="{ 'cursor-not-allowed text-gray-500': isLock, 'text-blue-900 hover:bg-blue-200': !isLock }"
+                        :disabled="isLock"
+                        @click="insertCash(typeInfo.value)"
+                      >
+                        投{{ typeInfo.name }}
+                      </button>
+                    </div>
+                  </div>
+                  <div class="flex-1 p-6 border-r border-gray-300">
+                    <h3 class="mb-4 text-xl text-center font-medium text-gray-900">
+                      选择商品
+                    </h3>
+                    <div class="flex flex-col items-stretch gap-2">
+                      <button
+                        v-for="(typeInfo, i) in goodTypes"
+                        :key="i"
+                        class="flex-1 rounded-md bg-blue-100 p-2 text-sm focus:outline-none select-none"
+                        :class="{ 'cursor-not-allowed text-gray-500': isLock, 'text-blue-900 hover:bg-blue-200': !isLock }"
+                        :disabled="isLock"
+                        @click="purchaseGood(typeInfo.id)"
+                      >
+                        买{{ typeInfo.name }}
+                      </button>
+                    </div>
+                  </div>
+                  <div class="flex-1 p-6">
+                    <h3 class="mb-4 text-xl text-center font-medium text-gray-900">
+                      其它操作
+                    </h3>
+                    <div class="flex flex-col items-stretch gap-2">
+                      <button
+                        type="button"
+                        class="flex-1 rounded-md bg-blue-100 p-2 text-sm focus:outline-none select-none"
+                        :class="{ 'cursor-not-allowed text-gray-500': isLock, 'text-blue-900 hover:bg-blue-200': !isLock }"
+                        :disabled="isLock"
+                        @click="makeChanges"
+                      >
+                        找零并退出
+                      </button>
+                      <button
+                        type="button"
+                        class="flex-1 rounded-md bg-blue-100 p-2 text-sm focus:outline-none select-none"
+                        :class="{ 'cursor-not-allowed text-gray-500': isLock, 'text-blue-900 hover:bg-blue-200': !isLock }"
+                        :disabled="isLock"
+                        @click="refill"
+                      >
+                        补货
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="px-6 py-3">
+                  <ul class="text-gray-500 text-xs space-y-1">
+                    <li>
+                      此系统为模拟售卖机，投币和购物操作均不会实际扣费，请放心使用。
+                    </li>
+                  </ul>
+                </div>
+              </DialogPanel>
+            </TransitionChild>
+          </div>
+        </div>
+      </Dialog>
+    </TransitionRoot>
   </div>
 </template>

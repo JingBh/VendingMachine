@@ -6,6 +6,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include "../core/error/NotSufficientError.h"
 #include "../core/Good.h"
 
 WebUI::WebUI(const std::shared_ptr<VendingMachine> &machine) : machine(machine) {
@@ -51,9 +52,13 @@ void WebUI::registerEndpoints() {
 #endif
     });
 
-    svr.Get("/api/goods", [&](const Request &, Response &res) {
-        nlohmann::json j;
+    svr.Get("/api/state", [&](const Request &, Response &res) {
+        nlohmann::json json;
 
+        const nlohmann::json jsonMachine = *machine;
+        json.emplace("machine", jsonMachine);
+
+        nlohmann::json jsonGoods;
         for (auto &goodType : {
             COCA_COLA,
             PEPSI_COLA,
@@ -61,19 +66,92 @@ void WebUI::registerEndpoints() {
             COFFEE,
             WATER
         }) {
-            j.push_back({
-                { "id", Good(goodType).getImageId() },
+            jsonGoods.push_back({
+                { "id", goodType },
+                { "imageId", Good(goodType).getImageId() },
                 { "name", Good(goodType).getName() },
                 { "price", Good(goodType).getPrice() }
             });
         }
+        json.emplace("goods", jsonGoods);
 
-        res.set_content(j.dump(), "application/json");
+        const nlohmann::json jsonCashes = {
+            {
+                { "name", "十元" },
+                { "value", 1000 }
+            },
+            {
+                { "name", "五元" },
+                { "value", 500 }
+            },
+            {
+                { "name", "二元" },
+                { "value", 200 }
+            },
+            {
+                { "name", "一元" },
+                { "value", 100 }
+            },
+            {
+                { "name", "五角" },
+                { "value", 50 }
+            }
+        };
+        json.emplace("cashes", jsonCashes);
+
+        res.set_content(json.dump(), "application/json; charset=utf-8");
     });
 
-    svr.Get("/api/state", [&](const Request &, Response &res) {
-        const nlohmann::json j = *machine;
-        res.set_content(j.dump(), "application/json");
+    svr.Post("/api/cash", [&](const Request &req, Response &res) {
+        if (!req.has_param("value")) {
+            res.status = 400;
+            return;
+        }
+
+        const Cash cash(std::stoll(req.get_param_value("value")));
+        machine->userPutMoney({ cash });
+
+        res.status = 201;
+    });
+
+    svr.Post("/api/purchase", [&](const Request &req, Response &res) {
+        if (!req.has_param("id")) {
+            res.status = 400;
+            return;
+        }
+
+        try {
+            const Good good(static_cast<GoodType>(std::stoi(req.get_param_value("id"))));
+            machine->userPurchase(good);
+        } catch (MoneyNotSufficientError &) {
+            res.status = 402;
+            res.set_content("余额不足！请投入足够的现金后再试。", "text/plain; charset=utf-8");
+            return;
+        } catch (OutOfStockError &) {
+            res.status = 402;
+            res.set_content("很抱歉，商品已售罄！请选择其他商品或联系工作人员补货。", "text/plain; charset=utf-8");
+            return;
+        }
+
+        res.status = 201;
+    });
+
+    svr.Post("/api/refill", [&](const Request &, Response &res) {
+        machine->refill();
+
+        res.status = 201;
+    });
+
+    svr.Post("/api/exit", [&](const Request &, Response &res) {
+        try {
+            const auto changes = machine->userMakeChanges();
+
+            const nlohmann::json j = changes;
+            res.set_content(j.dump(), "application/json; charset=utf-8");
+        } catch (MoneyNotSufficientError &) {
+            res.status = 402;
+            res.set_content("由于售卖机内零钱不足，找零失败！请联系工作人员处理。", "text/plain; charset=utf-8");
+        }
     });
 
     svr.Post("/api/stop", [&](const Request &, Response &) {

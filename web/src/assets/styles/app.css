@@ -10,9 +10,7 @@
 
   .vm .vm-rack-good.vm-falling {
     z-index: 4 !important;
-    transition: 0.6s cubic-bezier(1, 0, 1, 0.5) bottom, transform;
     transform: scale(1.1) !important;
-    bottom: 20% !important;
   }
 
   .vm .vm-rack-good.vm-falling+.vm-rack-ring {

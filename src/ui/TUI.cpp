@@ -207,7 +207,7 @@ void TUI::pagePurchase() const {
         waitForEnter();
     } catch (OutOfStockError &) {
         std::cout << '\n'
-            << "很抱歉，商品已售罄！请选择其他商品。" << '\n'
+            << "很抱歉，商品已售罄！请选择其他商品或联系工作人员补货。" << '\n'
             << "按 <Enter> 键继续..." << std::flush;
         waitForEnter();
     } catch (MoneyNotSufficientError &) {
@@ -232,8 +232,8 @@ void TUI::pageRefill() const {
         std::cout << std::endl;
     }
 
-    std::cout << "此操作会将每种商品余量填充至 10 件" << '\n'
-        << "并在零钱箱中填充 10 张一元现金和 10 张五角现金" << '\n'
+    std::cout << "此操作会将每种商品余量补至 10 件" << '\n'
+        << "并在零钱箱中补充 10 张一元现金和 10 张五角现金，用于找零" << '\n'
         << "确定要继续吗？" << '\n'
         << std::endl;
 
