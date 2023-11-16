@@ -61,7 +61,27 @@ const drawPriceTags = () => {
 }
 
 const goodTypes = ref([])
+
+const getGoodTypeInfo = (typeId) => {
+  for (const typeInfo of goodTypes.value) {
+    if (typeInfo.id === Number(typeId)) {
+      return typeInfo
+    }
+  }
+  return null
+}
+
 const cashTypes = ref([])
+
+const getCashTypeInfo = (value) => {
+  for (const typeInfo of cashTypes.value) {
+    if (typeInfo.value === Number(value)) {
+      return typeInfo
+    }
+  }
+  return null
+}
+
 const goodCounts = ref({})
 
 const {
@@ -95,7 +115,44 @@ const showOpsModal = ref(false)
 
 const isProcessing = ref(false)
 
+const insertCash = (value) => {
+  if (isProcessing.value) {
+    return
+  }
+  showOpsModal.value = false
+  isProcessing.value = true
+
+  axios.post('/api/cash', {
+    value
+  }, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+  }).then(() => {
+    fetchData()
+  }).catch((e) => {
+    console.error(e)
+    messageModalTitle.value = '投币失败'
+    messageModalMessage.value = '请求遇到未知问题，请检查程序是否在运行。'
+    showMessageModal.value = true
+  }).finally(() => {
+    isProcessing.value = false
+  })
+}
+
 const isDropping = ref(false)
+
+const showPickupModal = ref(false)
+
+const itemsToPickup = ref({})
+
+const totalItemsToPickup = computed(() => {
+  let total = 0
+  for (const i in itemsToPickup.value) {
+    total += itemsToPickup.value[i]
+  }
+  return total
+})
 
 const animateDrop = (id) => {
   const eleAll = document.querySelectorAll(`.vm .vm-rack-good[data-item-id="${id}"]`)
@@ -140,36 +197,11 @@ const animateDrop = (id) => {
   }, 500)
 }
 
-const insertCash = (value) => {
-  showOpsModal.value = false
-
-  if (isProcessing.value) {
-    return
-  }
-  isProcessing.value = true
-
-  axios.post('/api/cash', {
-    value
-  }, {
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    }
-  }).then(() => {
-    fetchData()
-  }).catch((e) => {
-    console.error(e)
-    alert('投币失败！')
-  }).finally(() => {
-    isProcessing.value = false
-  })
-}
-
 const purchaseGood = (id) => {
-  showOpsModal.value = false
-
   if (isProcessing.value) {
     return
   }
+  showOpsModal.value = false
   isProcessing.value = true
 
   axios.post('/api/purchase', {
@@ -179,42 +211,135 @@ const purchaseGood = (id) => {
       'Content-Type': 'application/x-www-form-urlencoded'
     }
   }).then(() => {
+    itemsToPickup.value[id] = (itemsToPickup.value[id] || 0) + 1
     animateDrop(id)
   }).catch((e) => {
+    messageModalTitle.value = '购买失败'
+    showMessageModal.value = true
     if (e.response?.status === 402) {
-      alert(e.response.data)
+      messageModalMessage.value = e.response.data
     } else {
       console.error(e)
-      alert('购买失败！')
+      messageModalMessage.value = '请求遇到未知问题，请检查程序是否在运行。'
     }
   }).finally(() => {
     isProcessing.value = false
   })
 }
 
-const refill = () => {
+const openPickupModal = () => {
+  if (isDropping.value) {
+    messageModalTitle.value = '取货'
+    messageModalMessage.value = '正在出货，请等待出货完成后再取货。'
+    showMessageModal.value = true
+  } else if (!totalItemsToPickup.value) {
+    messageModalTitle.value = '取货'
+    messageModalMessage.value = '当前没有待取商品。'
+    showMessageModal.value = true
+  } else {
+    showPickupModal.value = true
+  }
+}
+
+const closePickupModal = () => {
+  showPickupModal.value = false
+  itemsToPickup.value = {}
+}
+
+const changes = ref([])
+
+const showChangesModal = ref(false)
+
+const makeChanges = () => {
+  if (isProcessing.value) {
+    return
+  }
   showOpsModal.value = false
   isProcessing.value = true
-  axios.post('/api/refill').then(() => {
+
+  axios.post('/api/exit').then(({ data }) => {
+    changes.value = data
+    showChangesModal.value = true
     fetchData()
   }).catch((e) => {
-    console.error(e)
-    alert('补货失败！')
+    messageModalTitle.value = '找零失败'
+    showMessageModal.value = true
+    if (e.response?.status === 402) {
+      messageModalMessage.value = e.response.data
+    } else {
+      console.error(e)
+      messageModalMessage.value = '请求遇到未知问题，请检查程序是否在运行。'
+    }
   }).finally(() => {
     isProcessing.value = false
   })
 }
 
-const isLoading = computed(() => {
-  return dataLoading.value || isProcessing.value
-})
+const closeChangesModal = () => {
+  showChangesModal.value = false
+  changes.value = []
+}
+
+const refill = () => {
+  if (isProcessing.value) {
+    return
+  }
+
+  if (isDropping.value) {
+    messageModalTitle.value = '补货'
+    messageModalMessage.value = '正在出货，请等待出货完成后再补货。'
+    showMessageModal.value = true
+    return
+  }
+
+  confirmModalCallback = () => {
+    isProcessing.value = true
+    axios.post('/api/refill').then(() => {
+      fetchData()
+      messageModalTitle.value = '补货完成'
+      messageModalMessage.value = ''
+      showMessageModal.value = true
+    }).catch((e) => {
+      console.error(e)
+      messageModalTitle.value = '补货失败'
+      messageModalMessage.value = '请求遇到未知问题，请检查程序是否在运行。'
+      showMessageModal.value = true
+    }).finally(() => {
+      isProcessing.value = false
+    })
+  }
+
+  showOpsModal.value = false
+  confirmModalMessage.value = '你正在进行补货操作，此操作会将每种商品余量补至 10 件，并在零钱箱中补充 10 张一元现金和 10 张五角现金用于找零。确定要继续吗？'
+  showConfirmModal.value = true
+}
+
+const messageModalTitle = ref('')
+
+const messageModalMessage = ref('')
+
+const showMessageModal = ref(false)
+
+const confirmModalMessage = ref('')
+
+const showConfirmModal = ref(false)
+
+let confirmModalCallback = null
+
+const confirmModalConfirm = () => {
+  if (confirmModalCallback) {
+    confirmModalCallback()
+    confirmModalCallback = null
+  }
+  showConfirmModal.value = false
+}
 
 const isLock = computed(() => {
   return isLoading.value || isDropping.value
 })
 
-const isError = computed(() => {
-  return dataError.value
+const isLoading = computed(() => {
+  return dataLoading.value || isProcessing.value
 })
 </script>
 
@@ -287,6 +412,7 @@ const isError = computed(() => {
         class="absolute rounded-sm hover:ring-4 ring-amber-500 cursor-pointer"
         style="bottom: 16.7%; left: 18.7%; width: 42.5%; height: 17.5%; z-index: 6"
         v-tippy="'取货口'"
+        @click="openPickupModal()"
       />
       <div
         class="absolute rounded-lg hover:ring-4 ring-amber-500 cursor-pointer"
@@ -332,7 +458,7 @@ const isError = computed(() => {
           正在加载数据...
         </p>
         <p
-          v-else-if="isError"
+          v-else-if="dataError"
           class="text-red-600"
         >
           加载数据失败！请检查程序是否在运行并刷新重试。
@@ -342,6 +468,12 @@ const isError = computed(() => {
           class="text-sky-600"
         >
           正在出货，请耐心等待...
+        </p>
+        <p
+          v-else-if="totalItemsToPickup > 0"
+          class="text-sky-600"
+        >
+          你有 {{ totalItemsToPickup }} 件待取商品，请点击取货口取货。
         </p>
       </div>
       <hr class="border-t border-gray-400 my-3">
@@ -356,7 +488,7 @@ const isError = computed(() => {
         </ol>
       </div>
     </div>
-    <TransitionRoot
+    <transition-root
       appear
       :show="showOpsModal"
       as="template"
@@ -366,7 +498,7 @@ const isError = computed(() => {
         @close="showOpsModal = false"
         class="relative z-10"
       >
-        <TransitionChild
+        <transition-child
           as="template"
           enter="duration-300 ease-out"
           enter-from="opacity-0"
@@ -379,11 +511,11 @@ const isError = computed(() => {
             class="fixed inset-0 bg-black/30"
             aria-hidden="true"
           />
-        </TransitionChild>
+        </transition-child>
 
         <div class="fixed inset-0 overflow-y-auto">
           <div class="flex min-h-full items-center justify-center p-4">
-            <TransitionChild
+            <transition-child
               as="template"
               enter="duration-300 ease-out"
               enter-from="opacity-0 scale-95"
@@ -392,7 +524,7 @@ const isError = computed(() => {
               leave-from="opacity-100 scale-100"
               leave-to="opacity-0 scale-95"
             >
-              <DialogPanel class="w-full max-w-xl transform overflow-hidden rounded-2xl bg-white align-middle shadow-xl transition-all">
+              <dialog-panel class="w-full max-w-xl transform overflow-hidden rounded-2xl bg-white align-middle shadow-xl transition-all">
                 <div class="flex items-stretch border-b border-gray-300">
                   <div class="flex-1 p-6 border-r border-gray-300">
                     <h3 class="mb-4 text-xl text-center font-medium text-gray-900">
@@ -403,12 +535,17 @@ const isError = computed(() => {
                         v-for="(typeInfo, i) of cashTypes"
                         :key="i"
                         type="button"
-                        class="flex-1 rounded-md bg-blue-100 p-2 text-sm focus:outline-none select-none"
+                        class="flex-1 inline-flex items-center gap-1 rounded-md bg-blue-100 p-2 text-sm focus:outline-none select-none"
                         :class="{ 'cursor-not-allowed text-gray-500': isLock, 'text-blue-900 hover:bg-blue-200': !isLock }"
                         :disabled="isLock"
                         @click="insertCash(typeInfo.value)"
                       >
-                        投{{ typeInfo.name }}
+                        <img
+                          class="w-8 h-5 object-contain flex-shrink-0"
+                          :src="getImageUrl(typeInfo.imageId)"
+                          :alt="typeInfo.name"
+                        />
+                        <span class="flex-1">投{{ typeInfo.name }}</span>
                       </button>
                     </div>
                   </div>
@@ -420,12 +557,17 @@ const isError = computed(() => {
                       <button
                         v-for="(typeInfo, i) in goodTypes"
                         :key="i"
-                        class="flex-1 rounded-md bg-blue-100 p-2 text-sm focus:outline-none select-none"
+                        class="flex-1 inline-flex items-center gap-1 rounded-md bg-blue-100 p-2 text-sm focus:outline-none select-none"
                         :class="{ 'cursor-not-allowed text-gray-500': isLock, 'text-blue-900 hover:bg-blue-200': !isLock }"
                         :disabled="isLock"
                         @click="purchaseGood(typeInfo.id)"
                       >
-                        买{{ typeInfo.name }}
+                        <img
+                          class="w-4 h-5 object-contain flex-shrink-0"
+                          :src="getImageUrl(typeInfo.imageId)"
+                          :alt="typeInfo.name"
+                        />
+                        <span class="flex-1">买{{ typeInfo.name }}</span>
                       </button>
                     </div>
                   </div>
@@ -462,11 +604,320 @@ const isError = computed(() => {
                     </li>
                   </ul>
                 </div>
-              </DialogPanel>
-            </TransitionChild>
+              </dialog-panel>
+            </transition-child>
           </div>
         </div>
       </Dialog>
-    </TransitionRoot>
+    </transition-root>
+    <transition-root
+      appear
+      :show="showPickupModal"
+      as="template"
+    >
+      <Dialog
+        as="div"
+        @close="closePickupModal"
+        class="relative z-10"
+      >
+        <transition-child
+          as="template"
+          enter="duration-300 ease-out"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="duration-200 ease-in"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
+          <div
+            class="fixed inset-0 bg-black/30"
+            aria-hidden="true"
+          />
+        </transition-child>
+
+        <div class="fixed inset-0 overflow-y-auto">
+          <div class="flex min-h-full items-center justify-center p-4">
+            <transition-child
+              as="template"
+              enter="duration-300 ease-out"
+              enter-from="opacity-0 scale-95"
+              enter-to="opacity-100 scale-100"
+              leave="duration-200 ease-in"
+              leave-from="opacity-100 scale-100"
+              leave-to="opacity-0 scale-95"
+            >
+              <dialog-panel class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white align-middle shadow-xl transition-all">
+                <div class="flex flex-col items-stretch gap-4 p-6">
+                  <h3 class="text-xl font-medium text-gray-900">
+                    取货
+                  </h3>
+                  <p class="text-sm text-gray-600">
+                    你获得了：
+                  </p>
+                  <div class="flex flex-col items-stretch space-y-4">
+                    <template
+                      v-for="(count, typeId) in itemsToPickup"
+                      :key="typeId"
+                    >
+                      <div
+                        v-if="count"
+                        class="flex items-center gap-2"
+                      >
+                        <img
+                          class="w-10 h-10 object-contain flex-shrink-0"
+                          :src="getImageUrl(getGoodTypeInfo(typeId).imageId)"
+                          :alt="getGoodTypeInfo(typeId).name"
+                        />
+                        <p class="text-lg text-gray-700">
+                          {{ getGoodTypeInfo(typeId).name }}
+                          <span class="text-sm text-gray-500">
+                            x{{ count }}
+                          </span>
+                        </p>
+                      </div>
+                    </template>
+                  </div>
+                  <div class="flex justify-end">
+                    <button
+                      type="button"
+                      class="rounded-md bg-blue-100 text-blue-900 hover:bg-blue-200 px-4 py-2 text-sm focus:outline-none select-none"
+                      @click="closePickupModal"
+                    >
+                      确定
+                    </button>
+                  </div>
+                </div>
+              </dialog-panel>
+            </transition-child>
+          </div>
+        </div>
+      </Dialog>
+    </transition-root>
+    <transition-root
+      appear
+      :show="showChangesModal"
+      as="template"
+    >
+      <Dialog
+        as="div"
+        @close="closeChangesModal"
+        class="relative z-10"
+      >
+        <transition-child
+          as="template"
+          enter="duration-300 ease-out"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="duration-200 ease-in"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
+          <div
+            class="fixed inset-0 bg-black/30"
+            aria-hidden="true"
+          />
+        </transition-child>
+
+        <div class="fixed inset-0 overflow-y-auto">
+          <div class="flex min-h-full items-center justify-center p-4">
+            <transition-child
+              as="template"
+              enter="duration-300 ease-out"
+              enter-from="opacity-0 scale-95"
+              enter-to="opacity-100 scale-100"
+              leave="duration-200 ease-in"
+              leave-from="opacity-100 scale-100"
+              leave-to="opacity-0 scale-95"
+            >
+              <dialog-panel class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white align-middle shadow-xl transition-all">
+                <div class="flex flex-col items-stretch gap-4 p-6">
+                  <h3 class="text-xl font-medium text-gray-900">
+                    谢谢惠顾
+                  </h3>
+                  <template v-if="changes.length">
+                    <p class="text-sm text-gray-600">
+                      你获得了以下找零：
+                    </p>
+                    <div class="flex flex-col items-stretch space-y-2">
+                      <template
+                        v-for="(changeInfo, i) in changes"
+                        :key="i"
+                      >
+                        <div
+                          v-if="changeInfo.quantity"
+                          class="flex items-center gap-4"
+                        >
+                          <img
+                            class="w-14 h-10 object-contain flex-shrink-0"
+                            :src="getImageUrl(getCashTypeInfo(changeInfo.value).imageId)"
+                            :alt="getCashTypeInfo(changeInfo.value).name"
+                          />
+                          <p class="text-lg text-gray-700">
+                            {{ getCashTypeInfo(changeInfo.value).name }}
+                            <span class="text-sm text-gray-500">
+                            x{{ changeInfo.quantity }}
+                          </span>
+                          </p>
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+                  <p class="text-sm text-gray-600">
+                    感谢使用自动售卖机，欢迎下次光临！
+                  </p>
+                  <p
+                    v-if="totalItemsToPickup"
+                    class="text-sm text-gray-600"
+                  >
+                    别忘了在取货口取走你的商品！
+                  </p>
+                  <div class="flex justify-end">
+                    <button
+                      type="button"
+                      class="rounded-md bg-blue-100 text-blue-900 hover:bg-blue-200 px-4 py-2 text-sm focus:outline-none select-none"
+                      @click="closeChangesModal"
+                    >
+                      确定
+                    </button>
+                  </div>
+                </div>
+              </dialog-panel>
+            </transition-child>
+          </div>
+        </div>
+      </Dialog>
+    </transition-root>
+    <transition-root
+      appear
+      :show="showMessageModal"
+      as="template"
+    >
+      <Dialog
+        as="div"
+        @close="showMessageModal = false"
+        class="relative z-10"
+      >
+        <transition-child
+          as="template"
+          enter="duration-300 ease-out"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="duration-200 ease-in"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
+          <div
+            class="fixed inset-0 bg-black/30"
+            aria-hidden="true"
+          />
+        </transition-child>
+
+        <div class="fixed inset-0 overflow-y-auto">
+          <div class="flex min-h-full items-center justify-center p-4">
+            <transition-child
+              as="template"
+              enter="duration-300 ease-out"
+              enter-from="opacity-0 scale-95"
+              enter-to="opacity-100 scale-100"
+              leave="duration-200 ease-in"
+              leave-from="opacity-100 scale-100"
+              leave-to="opacity-0 scale-95"
+            >
+              <dialog-panel class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white align-middle shadow-xl transition-all">
+                <div class="flex flex-col items-stretch gap-4 p-6">
+                  <h3
+                    v-if="messageModalTitle"
+                    class="text-xl font-medium text-gray-900"
+                    v-text="messageModalTitle"
+                  />
+                  <p
+                    v-if="messageModalMessage"
+                    class="text-sm text-gray-600"
+                    v-text="messageModalMessage"
+                  />
+                  <div class="flex justify-end gap-4">
+                    <button
+                      type="button"
+                      class="rounded-md bg-blue-100 text-blue-900 hover:bg-blue-200 px-4 py-2 text-sm focus:outline-none select-none"
+                      @click="showMessageModal = false"
+                    >
+                      确定
+                    </button>
+                  </div>
+                </div>
+              </dialog-panel>
+            </transition-child>
+          </div>
+        </div>
+      </Dialog>
+    </transition-root>
+    <transition-root
+      appear
+      :show="showConfirmModal"
+      as="template"
+    >
+      <Dialog
+        as="div"
+        @close="showConfirmModal = false"
+        class="relative z-10"
+      >
+        <transition-child
+          as="template"
+          enter="duration-300 ease-out"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="duration-200 ease-in"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
+          <div
+            class="fixed inset-0 bg-black/30"
+            aria-hidden="true"
+          />
+        </transition-child>
+
+        <div class="fixed inset-0 overflow-y-auto">
+          <div class="flex min-h-full items-center justify-center p-4">
+            <transition-child
+              as="template"
+              enter="duration-300 ease-out"
+              enter-from="opacity-0 scale-95"
+              enter-to="opacity-100 scale-100"
+              leave="duration-200 ease-in"
+              leave-from="opacity-100 scale-100"
+              leave-to="opacity-0 scale-95"
+            >
+              <dialog-panel class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white align-middle shadow-xl transition-all">
+                <div class="flex flex-col items-stretch gap-4 p-6">
+                  <h3 class="text-xl font-medium text-gray-900">
+                    注意
+                  </h3>
+                  <p
+                    class="text-sm text-gray-600"
+                    v-text="confirmModalMessage"
+                  />
+                  <div class="flex justify-end gap-4">
+                    <button
+                      type="button"
+                      class="rounded-md bg-gray-200 text-gray-900 hover:bg-gray-300 px-4 py-2 text-sm focus:outline-none select-none"
+                      @click="showConfirmModal = false"
+                    >
+                      取消
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-md bg-blue-100 text-blue-900 hover:bg-blue-200 px-4 py-2 text-sm focus:outline-none select-none"
+                      @click="confirmModalConfirm"
+                    >
+                      确定
+                    </button>
+                  </div>
+                </div>
+              </dialog-panel>
+            </transition-child>
+          </div>
+        </div>
+      </Dialog>
+    </transition-root>
   </div>
 </template>

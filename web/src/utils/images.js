@@ -11,6 +11,11 @@ import imgCoffee from '../assets/images/coffee.png?inline'
 import imgCoffeeSmall from '../assets/images/coffee-small.png?inline'
 import imgWater from '../assets/images/water.png?inline'
 import imgWaterSmall from '../assets/images/water-small.png?inline'
+import imgTenYuan from '../assets/images/ten-yuan.png?inline'
+import imgFiveYuan from '../assets/images/five-yuan.png?inline'
+import imgTwoYuan from '../assets/images/two-yuan.png?inline'
+import imgOneYuan from '../assets/images/one-yuan.png?inline'
+import imgFiftyCents from '../assets/images/fifty-cents.png?inline'
 
 const imageUrls = {
   'vending-machine': imgVendingMachine,
@@ -25,7 +30,12 @@ const imageUrls = {
   coffee: imgCoffee,
   'coffee-small': imgCoffeeSmall,
   water: imgWater,
-  'water-small': imgWaterSmall
+  'water-small': imgWaterSmall,
+  'ten-yuan': imgTenYuan,
+  'five-yuan': imgFiveYuan,
+  'two-yuan': imgTwoYuan,
+  'one-yuan': imgOneYuan,
+  'fifty-cents': imgFiftyCents
 }
 
 export const getImageUrl = (name) => {

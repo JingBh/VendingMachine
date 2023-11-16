@@ -77,22 +77,27 @@ void WebUI::registerEndpoints() {
 
         const nlohmann::json jsonCashes = {
             {
+                { "imageId", "ten-yuan" },
                 { "name", "十元" },
                 { "value", 1000 }
             },
             {
+                { "imageId", "five-yuan" },
                 { "name", "五元" },
                 { "value", 500 }
             },
             {
+                { "imageId", "two-yuan" },
                 { "name", "二元" },
                 { "value", 200 }
             },
             {
+                { "imageId", "one-yuan" },
                 { "name", "一元" },
                 { "value", 100 }
             },
             {
+                { "imageId", "fifty-cents" },
                 { "name", "五角" },
                 { "value", 50 }
             }
