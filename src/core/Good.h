@@ -38,7 +38,6 @@ private:
     const GoodType type;
 };
 
-
 template<>
 struct nlohmann::adl_serializer<Good> {
     static void to_json(json &j, const Good &obj) {

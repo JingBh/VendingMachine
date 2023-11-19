@@ -21,8 +21,8 @@ export default defineConfig({
             const source = Buffer.from(fileInfo.source, 'utf-8')
 
             const output = '#include <cstddef>' + '\n\n' +
-              `constexpr unsigned char index_html[] = { ${source.join(', ')} };` + '\n\n' +
-              `constexpr std::size_t index_html_len = ${source.length};` + '\n'
+              `static constexpr unsigned char index_html[] = { ${source.join(', ')} };` + '\n\n' +
+              `static constexpr std::size_t index_html_len = ${source.length};` + '\n'
 
             const distDir = options.dir || path.join(__dirname, 'dist')
             const includeDir = path.join(distDir, 'include')

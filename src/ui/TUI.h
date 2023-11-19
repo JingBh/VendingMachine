@@ -27,6 +27,8 @@ public:
 
     void pageRefill() const;
 
+    void pageStatistics() const;
+
     void pageExit() const;
 
 private:

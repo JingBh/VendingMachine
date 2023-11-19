@@ -104,7 +104,8 @@ void TUI::pageHome() const {
                 { 1, "投币" },
                 { 2, "购买商品" },
                 { 3, "补货（仅限工作人员）" },
-                { 4, "退出" }
+                { 4, "统计信息（仅限工作人员）" },
+                { 5, "退出" }
             });
         } catch (ValueError &) {
             std::cout << '\n'
@@ -126,6 +127,9 @@ void TUI::pageHome() const {
                 pageRefill();
                 break;
             case 4:
+                pageStatistics();
+                break;
+            case 5:
                 pageExit();
                 return;
             default:
@@ -255,6 +259,54 @@ void TUI::pageRefill() const {
         << "操作已取消" << '\n'
         << "按 <Enter> 键继续..." << std::flush;
     waitForEnter();
+}
+
+void TUI::pageStatistics() const {
+    std::cout << ansiClearScreen()
+        << "# 统计信息" << '\n'
+        << std::endl;
+
+    Money sum = 0;
+    if (!machine->getPurchaseHistory().empty()) {
+        std::cout << "已售商品：" << '\n';
+        for (const auto &good : machine->getPurchaseHistory()) {
+            const Money value = good.getPrice().operator*(good.getQuantity());
+            sum += value;
+
+            std::cout << " - "
+                << std::left << std::setfill(' ') << std::setw(12) << good.getName() << '\t'
+                << std::left << std::setfill(' ') << std::setw(4) << "x" + std::to_string(good.getQuantity()) << '\t'
+                << "销售额：" << value << '\n';
+        }
+        std::cout << '\n';
+    }
+
+    std::cout << "总销售额：" << sum << '\n'
+        << std::endl;
+
+    try {
+        int op = promptSelection({
+            { 1, "返回" },
+            { 2, "清空数据" }
+        });
+
+        if (op == 2) {
+            std::cout << '\n'
+                << "确定要清空数据吗？清除后将不可恢复。" << '\n'
+                << std::endl;
+
+            op = promptSelection({
+                { 1, "继续" },
+                { 2, "取消" }
+            });
+
+            if (op == 1) {
+                machine->clearPurchaseHistory();
+            }
+        }
+    } catch (ValueError &) {
+        // pass
+    }
 }
 
 void TUI::pageExit() const {

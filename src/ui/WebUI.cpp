@@ -147,6 +147,12 @@ void WebUI::registerEndpoints() {
         res.status = 201;
     });
 
+    svr.Post("/api/history/clear", [&](const Request &, Response &res) {
+        machine->clearPurchaseHistory();
+
+        res.status = 201;
+    });
+
     svr.Post("/api/exit", [&](const Request &, Response &res) {
         try {
             const auto changes = machine->userMakeChanges();

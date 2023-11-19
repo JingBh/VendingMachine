@@ -45,7 +45,19 @@ void VendingMachine::userPurchase(const Good &good) {
         throw OutOfStockError("Good out of stock");
     }
 
-    userBalance -= good.getPrice() * good.getQuantity();
+    userBalance -= good.getPrice().operator*(good.getQuantity());
+
+    bool flag = false;
+    for (auto &item : purchaseHistory) {
+        if (item.isOfSameType(good)) {
+            item.fill(good.getQuantity());
+            flag = true;
+            break;
+        }
+    }
+    if (!flag) {
+        purchaseHistory.emplace_back(good);
+    }
 
     HasPersistence::saveState();
 }
@@ -109,6 +121,16 @@ void VendingMachine::refill() {
     HasPersistence::saveState();
 }
 
+const std::vector<Good> &VendingMachine::getPurchaseHistory() const {
+    return purchaseHistory;
+}
+
+void VendingMachine::clearPurchaseHistory() {
+    purchaseHistory.clear();
+
+    HasPersistence::saveState();
+}
+
 void VendingMachine::putMoney(const Cash &cash, const bool absolute) {
     bool flag = false;
     for (const auto &item : cashBox) {
@@ -162,12 +184,19 @@ void VendingMachine::loadState(std::ifstream &is) {
     nlohmann::json j;
     is >> j;
 
+    inventory.clear();
     for (const auto &item : j.at("inventory")) {
         putGood(item, true);
     }
 
+    cashBox.clear();
     for (const auto &item : j.at("cashBox")) {
         putMoney(item, true);
+    }
+
+    purchaseHistory.clear();
+    for (const auto &item : j.at("purchaseHistory")) {
+        purchaseHistory.push_back(item);
     }
 
     userBalance = j.at("userBalance");
@@ -189,4 +218,10 @@ void to_json(nlohmann::json &j, const VendingMachine &obj) {
     j.emplace("cashBox", jsonCashBox);
 
     j.emplace("userBalance", obj.getUserBalance());
+
+    nlohmann::json jsonPurchaseHistory;
+    for (const auto &item : obj.getPurchaseHistory()) {
+        jsonPurchaseHistory.push_back(item);
+    }
+    j.emplace("purchaseHistory", jsonPurchaseHistory);
 }

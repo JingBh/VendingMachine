@@ -13,9 +13,13 @@ public:
 
     Money operator-(const Money &rhs) const;
 
+    Money operator*(const long long int &rhs) const;
+
     Money &operator+=(const Money &rhs);
 
     Money &operator-=(const Money &rhs);
+
+    Money &operator*=(const long long int &rhs);
 
     // ReSharper disable once CppNonExplicitConversionOperator
     operator long long int() const; // NOLINT(*-explicit-constructor)

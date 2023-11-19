@@ -32,18 +32,18 @@ public:
 
     void refill();
 
+    const std::vector<Good> &getPurchaseHistory() const;
+
+    void clearPurchaseHistory();
+
 private:
     Money userBalance = 0;
 
-    /**
-     * Inventory for storing goods
-     */
     std::vector<std::unique_ptr<Good>> inventory;
 
-    /**
-     * Cash box for charging cash and making changes
-     */
     std::vector<std::unique_ptr<Cash>> cashBox;
+
+    std::vector<Good> purchaseHistory;
 
     void putMoney(const Cash &cash, bool absolute = false);
 

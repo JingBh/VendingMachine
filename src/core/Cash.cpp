@@ -5,7 +5,7 @@ Money Cash::getFaceValue() const {
 }
 
 Money Cash::getTotalValue() const {
-    return value * quantity;
+    return value.operator*(quantity);
 }
 
 Money Cash::valueOf(const CashType cashType) {

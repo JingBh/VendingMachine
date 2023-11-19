@@ -1,9 +1,12 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useWindowSize } from '@vueuse/core'
 import { useAxios } from '@vueuse/integrations/useAxios'
 import { TransitionRoot, TransitionChild, Dialog, DialogPanel } from '@headlessui/vue'
+import { Chart, BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip, Colors } from 'chart.js'
 import axios from 'axios'
+
+Chart.register(BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip, Colors)
 
 import { getImageUrl } from './utils/images.js'
 import money from './utils/money.js'
@@ -103,6 +106,10 @@ const {
       for (const item of data.machine.inventory) {
         goodCounts.value[item.type] = item.quantity
       }
+    }
+    if (data.machine?.purchaseHistory && statisticsChart) {
+      statisticsChart.data = getStatisticsChartData()
+      statisticsChart.update()
     }
   }
 })
@@ -280,6 +287,131 @@ const closeChangesModal = () => {
   changes.value = []
 }
 
+const canvasStatistics = ref(null)
+
+let statisticsChart = null
+
+const showStatisticsModal = ref(false)
+
+const openStatisticsModal = () => {
+  showOpsModal.value = false
+  showStatisticsModal.value = true
+
+  nextTick(() => {
+    const ele = canvasStatistics.value
+    if (!ele) {
+      return
+    }
+
+    statisticsChart = new Chart(ele, {
+      type: 'bar',
+      data: getStatisticsChartData(),
+      options: {
+        scales: {
+          y: {
+            type: 'linear',
+            display: true,
+            position: 'left',
+            min: 0,
+            ticks: {
+              precision: 0
+            }
+          },
+          y1: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            grid: {
+              drawOnChartArea: false, // only want the grid lines for one axis to show up
+            },
+            min: 0,
+            ticks: {
+              precision: 0,
+              callback: (value) => money(value)
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            position: 'top'
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                let label = context.dataset.label || ''
+                if (label) {
+                  label += '：'
+                }
+                label += context.datasetIndex === 1 ? money(context.parsed.y) : context.parsed.y
+                return label;
+              }
+            }
+          }
+        }
+      }
+    })
+  })
+}
+
+const getStatisticsChartData = () => {
+  const labels = []
+  const count = []
+  const price = []
+
+  for (const item of (data.value.machine?.purchaseHistory || [])) {
+    const typeInfo = getGoodTypeInfo(item.type)
+    labels.push(typeInfo?.name || item.type)
+    count.push(item.quantity)
+    price.push(typeInfo.price * item.quantity)
+  }
+
+  return {
+    labels,
+    datasets: [{
+      label: '销售量',
+      data: count
+    }, {
+      label: '销售额',
+      data: price,
+      yAxisID: 'y1'
+    }]
+  }
+}
+
+const clearStatistics = () => {
+  if (isProcessing.value) {
+    return
+  }
+
+  confirmModalCallback = () => {
+    isProcessing.value = true
+    axios.post('/api/history/clear').then(() => {
+      fetchData()
+      messageModalTitle.value = '提示'
+      messageModalMessage.value = '统计数据已清空！'
+      showMessageModal.value = true
+    }).catch((e) => {
+      console.error(e)
+      messageModalTitle.value = '清空统计数据失败'
+      messageModalMessage.value = '请求遇到未知问题，请检查程序是否在运行。'
+      showMessageModal.value = true
+    }).finally(() => {
+      isProcessing.value = false
+    })
+  }
+
+  showStatisticsModal.value = false
+  confirmModalMessage.value = '你正在进行清空统计数据操作。这些数据将被清除，无法恢复。确定要继续吗？'
+  showConfirmModal.value = true
+}
+
+watch(showStatisticsModal, (v) => {
+  if (!v && statisticsChart) {
+    statisticsChart.destroy()
+    statisticsChart = null
+  }
+})
+
 const refill = () => {
   if (isProcessing.value) {
     return
@@ -296,8 +428,8 @@ const refill = () => {
     isProcessing.value = true
     axios.post('/api/refill').then(() => {
       fetchData()
-      messageModalTitle.value = '补货完成'
-      messageModalMessage.value = ''
+      messageModalTitle.value = '提示'
+      messageModalMessage.value = '补货完成！'
       showMessageModal.value = true
     }).catch((e) => {
       console.error(e)
@@ -526,7 +658,7 @@ const isLoading = computed(() => {
             >
               <dialog-panel class="w-full max-w-xl transform overflow-hidden rounded-2xl bg-white align-middle shadow-xl transition-all">
                 <div class="flex items-stretch border-b border-gray-300">
-                  <div class="flex-1 p-6 border-r border-gray-300">
+                  <div class="flex-auto p-6 border-r border-gray-300">
                     <h3 class="mb-4 text-xl text-center font-medium text-gray-900">
                       投币
                     </h3>
@@ -549,7 +681,7 @@ const isLoading = computed(() => {
                       </button>
                     </div>
                   </div>
-                  <div class="flex-1 p-6 border-r border-gray-300">
+                  <div class="flex-auto p-6 border-r border-gray-300">
                     <h3 class="mb-4 text-xl text-center font-medium text-gray-900">
                       选择商品
                     </h3>
@@ -571,29 +703,47 @@ const isLoading = computed(() => {
                       </button>
                     </div>
                   </div>
-                  <div class="flex-1 p-6">
-                    <h3 class="mb-4 text-xl text-center font-medium text-gray-900">
-                      其它操作
-                    </h3>
-                    <div class="flex flex-col items-stretch gap-2">
-                      <button
-                        type="button"
-                        class="flex-1 rounded-md bg-blue-100 p-2 text-sm focus:outline-none select-none"
-                        :class="{ 'cursor-not-allowed text-gray-500': isLock, 'text-blue-900 hover:bg-blue-200': !isLock }"
-                        :disabled="isLock"
-                        @click="makeChanges"
-                      >
-                        找零并退出
-                      </button>
-                      <button
-                        type="button"
-                        class="flex-1 rounded-md bg-blue-100 p-2 text-sm focus:outline-none select-none"
-                        :class="{ 'cursor-not-allowed text-gray-500': isLock, 'text-blue-900 hover:bg-blue-200': !isLock }"
-                        :disabled="isLock"
-                        @click="refill"
-                      >
-                        补货
-                      </button>
+                  <div class="flex flex-col items-stretch">
+                    <div class="p-6 border-b border-gray-300">
+                      <h3 class="mb-4 text-xl text-center font-medium text-gray-900">
+                        其它操作
+                      </h3>
+                      <div class="flex flex-col items-stretch gap-2">
+                        <button
+                          type="button"
+                          class="flex-1 rounded-md bg-blue-100 px-4 py-2 text-sm focus:outline-none select-none"
+                          :class="{ 'cursor-not-allowed text-gray-500': isLock, 'text-blue-900 hover:bg-blue-200': !isLock }"
+                          :disabled="isLock"
+                          @click="makeChanges"
+                        >
+                          找零
+                        </button>
+                      </div>
+                    </div>
+                    <div class="p-6">
+                      <h3 class="mb-4 text-xl text-center font-medium text-gray-900">
+                        工作人员
+                      </h3>
+                      <div class="flex flex-col items-stretch gap-2">
+                        <button
+                          type="button"
+                          class="flex-1 rounded-md bg-blue-100 px-4 py-2 text-sm focus:outline-none select-none"
+                          :class="{ 'cursor-not-allowed text-gray-500': isLock, 'text-blue-900 hover:bg-blue-200': !isLock }"
+                          :disabled="isLock"
+                          @click="refill"
+                        >
+                          补货
+                        </button>
+                        <button
+                          type="button"
+                          class="flex-1 rounded-md bg-blue-100 px-4 py-2 text-sm focus:outline-none select-none"
+                          :class="{ 'cursor-not-allowed text-gray-500': isLock, 'text-blue-900 hover:bg-blue-200': !isLock }"
+                          :disabled="isLock"
+                          @click="openStatisticsModal"
+                        >
+                          查看统计数据
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -789,13 +939,93 @@ const isLoading = computed(() => {
     </transition-root>
     <transition-root
       appear
+      :show="showStatisticsModal"
+      as="template"
+    >
+      <Dialog
+        as="div"
+        @close="showStatisticsModal = false"
+        class="relative z-10"
+      >
+        <transition-child
+          as="template"
+          enter="duration-300 ease-out"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="duration-200 ease-in"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
+          <div
+            class="fixed inset-0 bg-black/30"
+            aria-hidden="true"
+          />
+        </transition-child>
+
+        <div class="fixed inset-0 overflow-y-auto">
+          <div class="flex min-h-full items-center justify-center p-4">
+            <transition-child
+              as="template"
+              enter="duration-300 ease-out"
+              enter-from="opacity-0 scale-95"
+              enter-to="opacity-100 scale-100"
+              leave="duration-200 ease-in"
+              leave-from="opacity-100 scale-100"
+              leave-to="opacity-0 scale-95"
+            >
+              <dialog-panel class="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white align-middle shadow-xl transition-all">
+                <div class="flex flex-col items-stretch gap-4 p-6">
+                  <h3 class="text-xl font-medium text-gray-900">
+                    统计数据
+                  </h3>
+                  <canvas
+                    ref="canvasStatistics"
+                    class="w-full"
+                  />
+                  <p
+                    v-if="data.machine?.purchaseHistory?.length"
+                    class="text-sm text-blue-400"
+                  >
+                    总销售额：{{ money(data.machine.purchaseHistory.reduce((acc, cur) => acc + cur.quantity * getGoodTypeInfo(cur.type).price, 0)) }}
+                  </p>
+                  <p
+                    v-else
+                    class="text-sm text-gray-500"
+                  >
+                    暂无销售数据！
+                  </p>
+                  <div class="flex justify-end gap-4">
+                    <button
+                      type="button"
+                      class="rounded-md bg-red-100 text-red-900 hover:bg-red-200 px-4 py-2 text-sm focus:outline-none select-none"
+                      @click="clearStatistics"
+                    >
+                      清空统计数据
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-md bg-blue-100 text-blue-900 hover:bg-blue-200 px-4 py-2 text-sm focus:outline-none select-none"
+                      @click="showStatisticsModal = false"
+                    >
+                      关闭
+                    </button>
+                  </div>
+                </div>
+              </dialog-panel>
+            </transition-child>
+          </div>
+        </div>
+      </Dialog>
+    </transition-root>
+    <transition-root
+      appear
       :show="showMessageModal"
       as="template"
     >
       <Dialog
         as="div"
         @close="showMessageModal = false"
-        class="relative z-10"
+        class="relative z-20"
       >
         <transition-child
           as="template"
@@ -859,7 +1089,7 @@ const isLoading = computed(() => {
       <Dialog
         as="div"
         @close="showConfirmModal = false"
-        class="relative z-10"
+        class="relative z-20"
       >
         <transition-child
           as="template"
