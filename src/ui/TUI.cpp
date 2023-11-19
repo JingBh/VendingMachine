@@ -1,5 +1,6 @@
 #include "TUI.h"
 
+#include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -385,5 +386,8 @@ void TUI::waitForEnter() {
 }
 
 std::string TUI::ansiClearScreen() {
+#ifdef _WIN32
+    std:system("cls");
+#endif
     return "\033c";
 }
