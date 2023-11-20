@@ -48,7 +48,7 @@ void WebUI::registerEndpoints() {
 #include "index.html.h"
         res.set_content(reinterpret_cast<const char*>(index_html), index_html_len, "text/html; charset=utf-8");
 #else
-        res.set_content("未找到网页资源，请参考课设报告书中相关说明正确编译。", "text/plain; charset=utf-8");
+        res.set_content("未找到网页资源，请参考课设报告中相关说明重新编译，或选择其它类型的用户界面。", "text/plain; charset=utf-8");
 #endif
     });
 

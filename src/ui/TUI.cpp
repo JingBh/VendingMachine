@@ -31,21 +31,13 @@ TUI::TUI(const std::shared_ptr<VendingMachine> &machine) : machine(machine) {
     // Enable UTF-8 support
     SetConsoleCP(65001);
     SetConsoleOutputCP(65001);
-
-    // Enable ANSI support
-    // Only works for Windows 10+
-    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    DWORD dwMode = 0;
-    GetConsoleMode(hOut, &dwMode);
-    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-    SetConsoleMode(hOut, dwMode);
 #endif
 }
 
 void TUI::pageInit() const {
-    ansiClearScreen();
+    clearScreen();
 
-    std::cout << ansiClearScreen()
+    std::cout << clearScreen()
         << "自动售卖机模拟系统" << '\n'
         << "by 22080206 敬博浩" << '\n'
         << std::endl;
@@ -53,8 +45,8 @@ void TUI::pageInit() const {
     while (true) {
         int op;
         try {
-            op = promptSelection("请选择界面类型：", {
-                { 1, "命令行" },
+            op = promptSelection("请选择用户界面类型：", {
+                { 1, "终端" },
                 { 2, "Web" }
             });
         } catch (ValueError &) {
@@ -82,7 +74,7 @@ void TUI::pageInit() const {
 }
 
 void TUI::pageWebUI() const {
-    std::cout << ansiClearScreen()
+    std::cout << clearScreen()
         << "# Web UI" << '\n'
         << std::endl;
 
@@ -92,7 +84,7 @@ void TUI::pageWebUI() const {
 
 void TUI::pageHome() const {
     while (true) {
-        std::cout << ansiClearScreen()
+        std::cout << clearScreen()
             << "欢迎使用自动售卖机！" << '\n'
             << std::endl;
 
@@ -106,7 +98,7 @@ void TUI::pageHome() const {
                 { 2, "购买商品" },
                 { 3, "补货（仅限工作人员）" },
                 { 4, "统计信息（仅限工作人员）" },
-                { 5, "退出" }
+                { 5, "找零并退出" }
             });
         } catch (ValueError &) {
             std::cout << '\n'
@@ -140,7 +132,7 @@ void TUI::pageHome() const {
 }
 
 void TUI::pageInsertCash() const {
-    std::cout << ansiClearScreen()
+    std::cout << clearScreen()
         << "# 投币" << '\n'
         << std::endl;
 
@@ -166,7 +158,7 @@ void TUI::pageInsertCash() const {
 }
 
 void TUI::pagePurchase() const {
-    std::cout << ansiClearScreen()
+    std::cout << clearScreen()
         << "# 购买商品" << '\n'
         << std::endl;
 
@@ -207,7 +199,7 @@ void TUI::pagePurchase() const {
 
         std::cout << '\n'
             << "购买成功！" << '\n'
-            << "您获得了：" << good.getName() << " x" << good.getQuantity() << '\n'
+            << "你获得了：" << good.getName() << " x" << good.getQuantity() << '\n'
             << "按 <Enter> 键继续..." << std::flush;
         waitForEnter();
     } catch (OutOfStockError &) {
@@ -224,7 +216,7 @@ void TUI::pagePurchase() const {
 }
 
 void TUI::pageRefill() const {
-    std::cout << ansiClearScreen()
+    std::cout << clearScreen()
         << "# 补货" << '\n'
         << std::endl;
 
@@ -263,7 +255,7 @@ void TUI::pageRefill() const {
 }
 
 void TUI::pageStatistics() const {
-    std::cout << ansiClearScreen()
+    std::cout << clearScreen()
         << "# 统计信息" << '\n'
         << std::endl;
 
@@ -311,13 +303,15 @@ void TUI::pageStatistics() const {
 }
 
 void TUI::pageExit() const {
-    std::cout << ansiClearScreen();
+    std::cout << clearScreen()
+        << "# 找零并退出" << '\n'
+        << std::endl;
 
     try {
         const auto changes = machine->userMakeChanges();
 
         if (!changes.empty()) {
-            std::cout << "您获得了以下找零：" << '\n';
+            std::cout << "你获得了以下找零：" << '\n';
             for (const auto &cash : changes) {
                 std::cout << " - " << cash.getFaceValue() << '\t'
                     << cash.getQuantity() << " 张" << '\n';
@@ -325,11 +319,15 @@ void TUI::pageExit() const {
             std::cout << '\n';
         }
 
-        std::cout << "感谢您使用自动售卖机，欢迎下次光临！" << std::endl;
+        std::cout << "感谢使用自动售卖机，欢迎下次光临！" << std::endl;
     } catch (MoneyNotSufficientError &) {
         std::cout << "由于售卖机内零钱不足，找零失败！" << '\n'
             << "请联系工作人员处理。" << std::endl;
     }
+
+    std::cout << '\n'
+        << "按 <Enter> 键退出..." << std::flush;
+    waitForEnter();
 }
 
 void TUI::printStatus() const {
@@ -385,9 +383,11 @@ void TUI::waitForEnter() {
     std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
 }
 
-std::string TUI::ansiClearScreen() {
+std::string TUI::clearScreen() {
 #ifdef _WIN32
-    std:system("cls");
-#endif
+    std::system("cls");
+    return "";
+#else
     return "\033c";
+#endif
 }

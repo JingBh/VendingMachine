@@ -42,7 +42,7 @@ private:
 
     static void waitForEnter();
 
-    static std::string ansiClearScreen();
+    static std::string clearScreen();
 };
 
 #endif // VENDINGMACHINE_TUI_H
