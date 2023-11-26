@@ -1,7 +1,7 @@
 #ifndef VENDINGMACHINE_VENDINGMACHINE_H
 #define VENDINGMACHINE_VENDINGMACHINE_H
 
-#include <fstream>
+#include <iosfwd>
 #include <memory>
 #include <vector>
 
@@ -15,6 +15,12 @@
 class VendingMachine final : public HasPersistence {
 public:
     VendingMachine();
+
+    /**
+     * Alternative constructor for testing that
+     * sets initial state and disables persistence.
+     */
+    VendingMachine(Money userBalance, const std::vector<Good> &inventory, const std::vector<Cash> &cashBox);
 
     virtual ~VendingMachine() = default;
 
@@ -36,6 +42,8 @@ public:
 
     void clearPurchaseHistory();
 
+    void saveState() const override;
+
 private:
     Money userBalance = 0;
 
@@ -44,6 +52,8 @@ private:
     std::vector<std::unique_ptr<Cash>> cashBox;
 
     std::vector<Good> purchaseHistory;
+
+    bool persistenceEnabled = true;
 
     void putMoney(const Cash &cash, bool absolute = false);
 

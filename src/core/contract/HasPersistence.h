@@ -1,7 +1,7 @@
 #ifndef VENDINGMACHINE_HASPERSISTENCE_H
 #define VENDINGMACHINE_HASPERSISTENCE_H
 
-#include <fstream>
+#include <iosfwd>
 #include <string>
 #include <utility>
 
@@ -9,9 +9,9 @@ class HasPersistence {
 public:
     HasPersistence() = delete;
 
-    void loadState();
+    virtual void loadState();
 
-    void saveState() const;
+    virtual void saveState() const;
 
 protected:
     explicit HasPersistence(std::string name)

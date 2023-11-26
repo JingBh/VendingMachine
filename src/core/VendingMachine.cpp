@@ -1,11 +1,27 @@
 #include "VendingMachine.h"
 
 #include <algorithm>
+#include <fstream>
 
 #include "error/NotSufficientError.h"
 
 VendingMachine::VendingMachine() : HasPersistence("machine") {
     HasPersistence::loadState();
+}
+
+VendingMachine::VendingMachine(const Money userBalance, const std::vector<Good> &inventory, const std::vector<Cash> &cashBox)
+    : HasPersistence("machine"), userBalance(userBalance) {
+    persistenceEnabled = false;
+
+    for (const auto &good : inventory) {
+        this->inventory.push_back(std::make_unique<Good>(good));
+    }
+
+    for (const auto &cash : cashBox) {
+        this->cashBox.push_back(std::make_unique<Cash>(cash));
+    }
+
+    this->userBalance = userBalance;
 }
 
 const std::vector<std::unique_ptr<Good>> &VendingMachine::getInventory() const {
@@ -26,7 +42,7 @@ void VendingMachine::userPutMoney(const std::vector<Cash> &payment) {
         userBalance += cash.getTotalValue();
     }
 
-    HasPersistence::saveState();
+    saveState();
 }
 
 void VendingMachine::userPurchase(const Good &good) {
@@ -59,7 +75,7 @@ void VendingMachine::userPurchase(const Good &good) {
         purchaseHistory.emplace_back(good);
     }
 
-    HasPersistence::saveState();
+    saveState();
 }
 
 std::vector<Cash> VendingMachine::userMakeChanges() {
@@ -95,7 +111,7 @@ std::vector<Cash> VendingMachine::userMakeChanges() {
 
     userBalance = 0;
 
-    HasPersistence::saveState();
+    saveState();
 
     return result;
 }
@@ -118,7 +134,7 @@ void VendingMachine::refill() {
         putMoney(Cash(cashType, 10), true);
     }
 
-    HasPersistence::saveState();
+    saveState();
 }
 
 const std::vector<Good> &VendingMachine::getPurchaseHistory() const {
@@ -128,7 +144,7 @@ const std::vector<Good> &VendingMachine::getPurchaseHistory() const {
 void VendingMachine::clearPurchaseHistory() {
     purchaseHistory.clear();
 
-    HasPersistence::saveState();
+    saveState();
 }
 
 void VendingMachine::putMoney(const Cash &cash, const bool absolute) {
@@ -172,6 +188,12 @@ void VendingMachine::putGood(const Good &good, const bool absolute) {
 
     if (!flag) {
         inventory.emplace_back(std::make_unique<Good>(good.getType(), good.getQuantity()));
+    }
+}
+
+void VendingMachine::saveState() const {
+    if (persistenceEnabled) {
+        HasPersistence::saveState();
     }
 }
 
