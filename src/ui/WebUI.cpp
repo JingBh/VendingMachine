@@ -9,7 +9,8 @@
 #include "../core/error/NotSufficientError.h"
 #include "../core/Good.h"
 
-WebUI::WebUI(const std::shared_ptr<VendingMachine> &machine) : machine(machine) {
+WebUI::WebUI(const std::shared_ptr<VendingMachine> &machine)
+    : machine{machine} {
     registerEndpoints();
 }
 

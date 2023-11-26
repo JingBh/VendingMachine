@@ -15,7 +15,7 @@ public:
 
 protected:
     explicit HasPersistence(std::string name)
-        : name(std::move(name)) {}
+        : name{std::move(name)} {}
 
     ~HasPersistence() = default;
 

@@ -22,7 +22,7 @@ public:
         : type{type} {}
 
     Good(const GoodType type, const unsigned int quantity)
-        : type{type}, HasQuantity{quantity} {}
+        : HasQuantity{quantity}, type{type} {}
 
     GoodType getType() const;
 

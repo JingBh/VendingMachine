@@ -10,7 +10,7 @@ VendingMachine::VendingMachine() : HasPersistence("machine") {
 }
 
 VendingMachine::VendingMachine(const Money userBalance, const std::vector<Good> &inventory, const std::vector<Cash> &cashBox)
-    : HasPersistence("machine"), userBalance(userBalance) {
+    : HasPersistence{"machine"}, userBalance{userBalance} {
     persistenceEnabled = false;
 
     for (const auto &good : inventory) {

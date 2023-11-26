@@ -20,19 +20,19 @@ public:
         : value{valueOf(cashType)} {}
 
     Cash(const CashType cashType, const unsigned int quantity)
-        : value{valueOf(cashType)}, HasQuantity{quantity} {}
+        : HasQuantity{quantity}, value{valueOf(cashType)} {}
 
     explicit Cash(const Money value)
         : value{value} {}
 
     Cash(const Money value, const unsigned int quantity)
-        : value{value}, HasQuantity{quantity} {}
+        : HasQuantity{quantity}, value{value} {}
 
     Cash(const Cash &other)
-        : value{other.value}, HasQuantity(other.quantity) {}
+        : HasQuantity{other.quantity}, value{other.value} {}
 
     Cash(Cash &&other) noexcept
-        : value{other.value}, HasQuantity(other.quantity) {}
+        : HasQuantity{other.quantity}, value{other.value} {}
 
     Money getFaceValue() const;
 
