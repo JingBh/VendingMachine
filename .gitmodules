@@ -6,3 +6,7 @@
 	path = lib/yhirose/cpp-httplib
 	url = https://github.com/yhirose/cpp-httplib
 	branch = master
+[submodule "lib/catchorg/Catch2"]
+	path = lib/catchorg/Catch2
+	url = https://github.com/catchorg/Catch2
+	branch = devel

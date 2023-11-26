@@ -1,6 +1,8 @@
 #ifndef VENDINGMACHINE_MONEY_H
 #define VENDINGMACHINE_MONEY_H
 
+#include <string>
+
 #include <nlohmann/json.hpp>
 
 class Money final {
@@ -23,6 +25,9 @@ public:
 
     // ReSharper disable once CppNonExplicitConversionOperator
     operator long long int() const; // NOLINT(*-explicit-constructor)
+
+    // ReSharper disable once CppNonExplicitConversionOperator
+    operator std::string() const; // NOLINT(*-explicit-constructor)
 
     long long int getValue() const;
 

@@ -16,13 +16,7 @@
 #endif
 
 std::ostream &operator<<(std::ostream &os, const Money &money) {
-    const long long int yuan = money.getValue() / 100;
-    const long long int fen = money.getValue() % 100;
-
-    os << "￥" << yuan << '.'
-        << std::setw(2) << std::setfill('0') << fen
-        << std::setw(0) << std::setfill(' ');
-
+    os << static_cast<std::string>(money);
     return os;
 }
 
