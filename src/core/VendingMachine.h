@@ -1,7 +1,7 @@
 #ifndef VENDINGMACHINE_VENDINGMACHINE_H
 #define VENDINGMACHINE_VENDINGMACHINE_H
 
-#include <fstream>
+#include <iosfwd>
 #include <memory>
 #include <vector>
 

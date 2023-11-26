@@ -1,6 +1,7 @@
 #include "VendingMachine.h"
 
 #include <algorithm>
+#include <fstream>
 
 #include "error/NotSufficientError.h"
 

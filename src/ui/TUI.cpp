@@ -26,7 +26,8 @@ std::ostream &operator<<(std::ostream &os, const Money &money) {
     return os;
 }
 
-TUI::TUI(const std::shared_ptr<VendingMachine> &machine) : machine(machine) {
+TUI::TUI(const std::shared_ptr<VendingMachine> &machine)
+    : machine{machine} {
 #ifdef _WIN32
     // Enable UTF-8 support
     SetConsoleCP(65001);
