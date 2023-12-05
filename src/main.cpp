@@ -9,7 +9,12 @@ int main() {
 
     // initialize UI
     const TUI ui(machine);
+#ifndef VENDINGMACHINE_DOCKER
     ui.pageInit();
+#else
+    machine->refill();
+    ui.pageWebUI();
+#endif
 
     return 0;
 }

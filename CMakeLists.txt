@@ -80,3 +80,9 @@ if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND VENDINGMACHINE_BUILD_TESTS)
     include(Catch)
     catch_discover_tests(VendingMachineTests)
 endif()
+
+# Below are the configurations for demo
+option(VENDINGMACHINE_DOCKER "Is in Docker" OFF)
+if (VENDINGMACHINE_DOCKER)
+    add_definitions(-DVENDINGMACHINE_DOCKER=1)
+endif()

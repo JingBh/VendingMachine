@@ -15,7 +15,7 @@ WebUI::WebUI(const std::shared_ptr<VendingMachine> &machine)
 }
 
 void WebUI::start() {
-    if (!svr.bind_to_port("localhost", PORT)) {
+    if (!svr.bind_to_port(HOST, PORT)) {
         std::cerr << "服务器启动失败！" << '\n'
             << "请检查 " << PORT << " 端口是否已被占用。" << std::endl;
         return;

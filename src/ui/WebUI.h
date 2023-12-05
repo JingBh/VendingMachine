@@ -13,6 +13,12 @@ public:
 
     void start();
 
+#ifndef VENDINGMACHINE_DOCKER
+    static constexpr std::string HOST = "localhost";
+#else
+    static constexpr std::string HOST = "0.0.0.0";
+#endif
+
     static constexpr int PORT = 8206;
 
 private:

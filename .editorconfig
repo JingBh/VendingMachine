@@ -8,11 +8,11 @@ charset = utf-8
 indent_style = space
 indent_size = 4
 
-[web/**/*]
+[{demo/**/*,web/**/*}]
 indent_size = 2
 
 [*.md]
 trim_trailing_whitespace = false
 
-[*.{xml,json,manifest}]
+[*.{xml,json,manifest,yml}]
 indent_size = 2
